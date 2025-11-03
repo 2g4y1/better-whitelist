@@ -31,6 +31,10 @@ jobs:
     - name: Build with Maven
       run: mvn clean package --batch-mode
       
+    - name: Get commit info
+      id: commit
+      run: echo "SHORT_SHA=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+      
     - name: Get version
       id: version
       run: |
@@ -39,6 +43,10 @@ jobs:
         else
           echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
         fi
+      
+    - name: Rename JAR with commit ID
+      run: |
+        mv target/better-whitelist-*.jar target/better-whitelist-${{ steps.version.outputs.VERSION }}-${{ steps.commit.outputs.SHORT_SHA }}.jar
         
     - name: Create Release
       uses: softprops/action-gh-release@v1
@@ -48,7 +56,9 @@ jobs:
         draft: false
         prerelease: false
         generate_release_notes: true
+        body: |
+          **Commit-ID:** ${{ steps.commit.outputs.SHORT_SHA }}
         files: |
-          target/better-whitelist-*.jar
+          target/better-whitelist-${{ steps.version.outputs.VERSION }}-${{ steps.commit.outputs.SHORT_SHA }}.jar
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

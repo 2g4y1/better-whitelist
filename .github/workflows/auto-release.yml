@@ -34,15 +34,21 @@ jobs:
       id: date
       run: echo "DATE=$(date +'%Y.%m.%d')" >> $GITHUB_OUTPUT
       
-    - name: Get commit count
+    - name: Get commit info
       id: commit
-      run: echo "COUNT=$(git rev-list --count HEAD)" >> $GITHUB_OUTPUT
+      run: |
+        echo "COUNT=$(git rev-list --count HEAD)" >> $GITHUB_OUTPUT
+        echo "SHORT_SHA=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
       
     - name: Generate version tag
       id: version
       run: |
         VERSION="v1.0.0-build.${{ steps.commit.outputs.COUNT }}"
         echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+      
+    - name: Rename JAR with commit ID
+      run: |
+        mv target/better-whitelist-*.jar target/better-whitelist-${{ steps.version.outputs.VERSION }}-${{ steps.commit.outputs.SHORT_SHA }}.jar
         
     - name: Check if tag exists
       id: tag_exists
@@ -67,9 +73,10 @@ jobs:
           
           **Build-Datum:** ${{ steps.date.outputs.DATE }}
           **Commit:** ${{ github.event.head_commit.message }}
+          **Commit-ID:** ${{ steps.commit.outputs.SHORT_SHA }}
           
           Diese Version wurde automatisch erstellt und als Pre-Release markiert.
         files: |
-          target/better-whitelist-*.jar
+          target/better-whitelist-${{ steps.version.outputs.VERSION }}-${{ steps.commit.outputs.SHORT_SHA }}.jar
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
