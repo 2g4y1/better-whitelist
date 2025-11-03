@@ -35,7 +35,19 @@
 
 ---
 
-## 🚀 Features
+## � Screenshots
+
+<div align="center">
+
+![Ingame Screenshot](images/ingame-screenshot.png)
+
+*What it looks like when a player gets invited*
+
+</div>
+
+---
+
+## �🚀 Features
 
 ### Core Features
 
