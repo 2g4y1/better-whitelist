@@ -1,0 +1,70 @@
+name: BetterWhitelist
+version: '${project.version}'
+main: com.betterwhitelist.BetterWhitelistPlugin
+api-version: '1.21'
+author: 2g4y1
+description: A better whitelist management plugin for Paper servers
+website: https://github.com/2g4y1/better-whitelist
+
+commands:
+  bwhitelist:
+    description: Better whitelist management commands
+    usage: /bwhitelist <add|remove|list|on|off|check|temp|info|reload>
+    aliases: [bwl, bw]
+    permission: betterwhitelist.use
+
+permissions:
+  betterwhitelist.*:
+    description: Gives access to all BetterWhitelist commands
+    default: op
+    children:
+      betterwhitelist.use: true
+      betterwhitelist.add: true
+      betterwhitelist.remove: true
+      betterwhitelist.list: true
+      betterwhitelist.on: true
+      betterwhitelist.off: true
+      betterwhitelist.check: true
+      betterwhitelist.temp: true
+      betterwhitelist.info: true
+      betterwhitelist.reload: true
+  
+  betterwhitelist.use:
+    description: Basic whitelist command usage
+    default: true
+  
+  betterwhitelist.add:
+    description: Add players to whitelist
+    default: op
+  
+  betterwhitelist.remove:
+    description: Remove players from whitelist
+    default: op
+  
+  betterwhitelist.list:
+    description: List whitelisted players
+    default: op
+  
+  betterwhitelist.on:
+    description: Enable whitelist
+    default: op
+  
+  betterwhitelist.off:
+    description: Disable whitelist
+    default: op
+  
+  betterwhitelist.check:
+    description: Check whitelist status
+    default: true
+  
+  betterwhitelist.temp:
+    description: Add temporary whitelist entries
+    default: op
+  
+  betterwhitelist.info:
+    description: Get info about whitelisted player
+    default: op
+  
+  betterwhitelist.reload:
+    description: Reload plugin configuration
+    default: op

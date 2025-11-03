@@ -1,0 +1,33 @@
+# BetterWhitelist Configuration
+
+# Enable or disable the whitelist
+whitelist-enabled: true
+
+# Message shown to non-whitelisted players when they try to join
+kick-message: "&cYou are not whitelisted on this server!"
+
+# Prefix for all plugin messages
+prefix: "&8[&6BetterWhitelist&8]&r "
+
+# Messages
+messages:
+  player-added: "&aAdded &e%player% &ato the whitelist!"
+  player-removed: "&cRemoved &e%player% &cfrom the whitelist!"
+  player-already-whitelisted: "&e%player% &cis already whitelisted!"
+  player-not-whitelisted: "&e%player% &cis not whitelisted!"
+  whitelist-enabled: "&aWhitelist has been enabled!"
+  whitelist-disabled: "&cWhitelist has been disabled!"
+  whitelist-status: "&7Whitelist is currently: %status%"
+  player-info: "&7Player: &e%player%\n&7Added by: &e%added_by%\n&7Added on: &e%date%\n&7Reason: &e%reason%"
+  temp-whitelist-added: "&aAdded &e%player% &ato the whitelist for &e%duration%&a!"
+  temp-whitelist-expired: "&cTemporary whitelist for &e%player% &chas expired!"
+  config-reloaded: "&aConfiguration reloaded!"
+  no-permission: "&cYou don't have permission to use this command!"
+  player-not-found: "&cPlayer not found!"
+  usage: "&cUsage: %usage%"
+
+# Date format for timestamps (Java SimpleDateFormat)
+date-format: "yyyy-MM-dd HH:mm:ss"
+
+# Auto-save interval in minutes (set to 0 to disable)
+auto-save-interval: 5
