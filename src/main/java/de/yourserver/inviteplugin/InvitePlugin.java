@@ -16,27 +16,38 @@ public class InvitePlugin extends JavaPlugin {
 
     @Override
     public void onEnable() {
+        getLogger().info("========================================");
+        getLogger().info("  InvitePlugin wird geladen...");
+        getLogger().info("========================================");
+        
         // LuckPerms API laden
         RegisteredServiceProvider<LuckPerms> provider = Bukkit.getServicesManager().getRegistration(LuckPerms.class);
         if (provider != null) {
             luckPerms = provider.getProvider();
-            getLogger().info("LuckPerms API erfolgreich geladen!");
+            getLogger().info("✓ LuckPerms API erfolgreich geladen!");
         } else {
-            getLogger().severe("LuckPerms wurde nicht gefunden! Plugin wird deaktiviert.");
+            getLogger().severe("✗ LuckPerms wurde nicht gefunden! Plugin wird deaktiviert.");
             getServer().getPluginManager().disablePlugin(this);
             return;
         }
 
         // Commands registrieren
         getCommand("invite").setExecutor(new InviteCommand(this));
+        getCommand("invite").setTabCompleter(new InviteTabCompleter());
         getCommand("uninvite").setExecutor(new UninviteCommand(this));
+        getCommand("uninvite").setTabCompleter(new UninviteTabCompleter());
+        getLogger().info("✓ Commands registriert: /invite, /uninvite");
 
-        getLogger().info("InvitePlugin wurde aktiviert!");
+        getLogger().info("========================================");
+        getLogger().info("  InvitePlugin v1.0.0 erfolgreich aktiviert!");
+        getLogger().info("========================================");
     }
 
     @Override
     public void onDisable() {
-        getLogger().info("InvitePlugin wurde deaktiviert!");
+        getLogger().info("========================================");
+        getLogger().info("  InvitePlugin wurde deaktiviert!");
+        getLogger().info("========================================");
     }
 
     /**
@@ -60,12 +71,25 @@ public class InvitePlugin extends JavaPlugin {
             // Whitelist muss auf dem Main-Thread gesetzt werden
             offlinePlayer.setWhitelisted(true);
 
+            // Konsolennachricht
+            getLogger().info("========================================");
+            getLogger().info("  SPIELER EINGELADEN");
+            getLogger().info("  Spieler: " + playerName);
+            getLogger().info("  UUID: " + offlinePlayer.getUniqueId());
+            getLogger().info("  Whitelist: ✓ Aktiviert");
+            getLogger().info("  LuckPerms-Gruppe: default");
+            getLogger().info("========================================");
+
             // LuckPerms-Gruppe setzen (läuft bereits async)
             setPlayerGroup(offlinePlayer, "default");
 
             return true;
         } catch (Exception e) {
-            getLogger().severe("Fehler beim Einladen von " + playerName + ": " + e.getMessage());
+            getLogger().severe("========================================");
+            getLogger().severe("  FEHLER beim Einladen!");
+            getLogger().severe("  Spieler: " + playerName);
+            getLogger().severe("  Fehler: " + e.getMessage());
+            getLogger().severe("========================================");
             e.printStackTrace();
             return false;
         }
@@ -81,9 +105,22 @@ public class InvitePlugin extends JavaPlugin {
         try {
             OfflinePlayer offlinePlayer = Bukkit.getOfflinePlayer(playerName);
             offlinePlayer.setWhitelisted(false);
+            
+            // Konsolennachricht
+            getLogger().info("========================================");
+            getLogger().info("  SPIELER ENTFERNT");
+            getLogger().info("  Spieler: " + playerName);
+            getLogger().info("  UUID: " + offlinePlayer.getUniqueId());
+            getLogger().info("  Whitelist: ✗ Deaktiviert");
+            getLogger().info("========================================");
+            
             return true;
         } catch (Exception e) {
-            getLogger().severe("Fehler beim Entfernen von " + playerName + ": " + e.getMessage());
+            getLogger().severe("========================================");
+            getLogger().severe("  FEHLER beim Entfernen!");
+            getLogger().severe("  Spieler: " + playerName);
+            getLogger().severe("  Fehler: " + e.getMessage());
+            getLogger().severe("========================================");
             return false;
         }
     }

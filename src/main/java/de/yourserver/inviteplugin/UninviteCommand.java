@@ -4,6 +4,7 @@ import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
+import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 
 public class UninviteCommand implements CommandExecutor {
@@ -18,8 +19,8 @@ public class UninviteCommand implements CommandExecutor {
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command,
                            @NotNull String label, @NotNull String[] args) {
 
-        // Permission-Check
-        if (!sender.hasPermission("invite.admin")) {
+        // Permission-Check (Konsole hat immer Zugriff)
+        if (sender instanceof Player && !sender.hasPermission("invite.admin")) {
             sender.sendMessage(plugin.createMessage(
                 "§cDu hast keine Berechtigung, diesen Befehl zu verwenden!",
                 NamedTextColor.RED
