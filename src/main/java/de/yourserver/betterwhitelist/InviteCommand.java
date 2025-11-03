@@ -18,6 +18,9 @@ public class InviteCommand implements CommandExecutor {
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command,
                            @NotNull String label, @NotNull String[] args) {
 
+        // Debug logging: who executed the command and with which args
+        plugin.getLogger().info("InviteCommand invoked by '" + sender.getName() + "' with args: " + java.util.Arrays.toString(args));
+
         // Argument-Check
         if (args.length != 1) {
             sender.sendMessage(plugin.createMessage(
