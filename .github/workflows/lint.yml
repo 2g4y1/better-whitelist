@@ -1,0 +1,28 @@
+name: Lint Code
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up JDK 21
+      uses: actions/setup-java@v4
+      with:
+        java-version: '21'
+        distribution: 'temurin'
+        cache: maven
+        
+    - name: Run Maven Compiler (Lint Check)
+      run: mvn compiler:compile --batch-mode
+      
+    - name: Check for compilation warnings
+      run: mvn clean compile -Xlint:all --batch-mode
