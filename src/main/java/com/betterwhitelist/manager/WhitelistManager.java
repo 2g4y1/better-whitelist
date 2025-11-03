@@ -144,13 +144,8 @@ public class WhitelistManager {
         }
         
         // Check if temporary whitelist has expired
-        if (entry.isExpired()) {
-            // Remove in sync context to avoid race conditions
-            removePlayer(playerId);
-            return false;
-        }
-        
-        return true;
+        // Don't remove here to avoid blocking I/O on main thread
+        return !entry.isExpired();
     }
     
     public WhitelistEntry getEntry(UUID playerId) {
@@ -162,16 +157,18 @@ public class WhitelistManager {
     }
     
     public void cleanupExpiredEntries() {
-        List<UUID> expiredPlayers = whitelistEntries.values().stream()
-            .filter(WhitelistEntry::isExpired)
-            .map(WhitelistEntry::getPlayerId)
+        // Collect expired entries directly from the entry set to avoid inconsistencies
+        List<Map.Entry<UUID, WhitelistEntry>> expiredEntries = whitelistEntries.entrySet().stream()
+            .filter(entry -> entry.getValue().isExpired())
             .collect(Collectors.toList());
         
-        for (UUID playerId : expiredPlayers) {
-            WhitelistEntry entry = whitelistEntries.get(playerId);
-            // Null check in case entry was removed by another thread
-            if (entry != null) {
-                plugin.getLogger().info("Temporary whitelist expired for player: " + entry.getPlayerName());
+        for (Map.Entry<UUID, WhitelistEntry> entry : expiredEntries) {
+            UUID playerId = entry.getKey();
+            WhitelistEntry wlEntry = entry.getValue();
+            
+            // Double-check the entry is still expired (in case it was updated)
+            if (wlEntry.isExpired()) {
+                plugin.getLogger().info("Temporary whitelist expired for player: " + wlEntry.getPlayerName());
                 removePlayer(playerId);
             }
         }

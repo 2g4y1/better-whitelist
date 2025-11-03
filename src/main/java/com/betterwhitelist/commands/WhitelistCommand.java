@@ -81,13 +81,18 @@ public class WhitelistCommand implements CommandExecutor, TabCompleter {
         }
         
         // Try to find player
+        // Note: getOfflinePlayer will work even if player never joined, using the name as-is
+        // For better validation, server admins should use exact player names
         OfflinePlayer target = Bukkit.getOfflinePlayer(playerName);
         String addedBy = sender instanceof Player ? sender.getName() : "Console";
         
-        if (plugin.getWhitelistManager().addPlayer(target.getUniqueId(), target.getName(), addedBy, reason)) {
-            sender.sendMessage(plugin.getMessage("player-added").replace("%player%", target.getName()));
+        // Use the provided name if getName() returns null (player never joined)
+        String targetName = target.getName() != null ? target.getName() : playerName;
+        
+        if (plugin.getWhitelistManager().addPlayer(target.getUniqueId(), targetName, addedBy, reason)) {
+            sender.sendMessage(plugin.getMessage("player-added").replace("%player%", targetName));
         } else {
-            sender.sendMessage(plugin.getMessage("player-already-whitelisted").replace("%player%", target.getName()));
+            sender.sendMessage(plugin.getMessage("player-already-whitelisted").replace("%player%", targetName));
         }
         
         return true;
@@ -224,13 +229,16 @@ public class WhitelistCommand implements CommandExecutor, TabCompleter {
         OfflinePlayer target = Bukkit.getOfflinePlayer(playerName);
         String addedBy = sender instanceof Player ? sender.getName() : "Console";
         
-        if (plugin.getWhitelistManager().addPlayerTemporary(target.getUniqueId(), target.getName(), addedBy, reason, durationMinutes)) {
+        // Use the provided name if getName() returns null (player never joined)
+        String targetName = target.getName() != null ? target.getName() : playerName;
+        
+        if (plugin.getWhitelistManager().addPlayerTemporary(target.getUniqueId(), targetName, addedBy, reason, durationMinutes)) {
             String duration = formatDuration(durationMinutes);
             sender.sendMessage(plugin.getMessage("temp-whitelist-added")
-                .replace("%player%", target.getName())
+                .replace("%player%", targetName)
                 .replace("%duration%", duration));
         } else {
-            sender.sendMessage(plugin.getMessage("player-already-whitelisted").replace("%player%", target.getName()));
+            sender.sendMessage(plugin.getMessage("player-already-whitelisted").replace("%player%", targetName));
         }
         
         return true;
@@ -273,7 +281,11 @@ public class WhitelistCommand implements CommandExecutor, TabCompleter {
             sender.sendMessage(plugin.colorize("&7Expiration: &e" + expirationStr));
             
             long remainingMinutes = (entry.getExpirationDate().getTime() - System.currentTimeMillis()) / (60 * 1000);
-            sender.sendMessage(plugin.colorize("&7Time remaining: &e" + formatDuration(remainingMinutes)));
+            if (remainingMinutes > 0) {
+                sender.sendMessage(plugin.colorize("&7Time remaining: &e" + formatDuration(remainingMinutes)));
+            } else {
+                sender.sendMessage(plugin.colorize("&cThis entry has expired and will be removed soon."));
+            }
         }
         
         return true;
