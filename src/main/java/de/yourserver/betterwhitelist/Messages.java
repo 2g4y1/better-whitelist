@@ -103,8 +103,8 @@ public class Messages {
             "§a✓ Spieler §e{player}§a wurde erfolgreich eingeladen!",
             "§a✓ Player §e{player}§a was successfully invited!");
         addMessage("invite.whitelist",
-            "§7→ Whitelist: §aAktiviert",
-            "§7→ Whitelist: §aEnabled");
+            "§7→ Zur Whitelist hinzugefügt",
+            "§7→ Added to whitelist");
         addMessage("invite.group",
             "§7→ LuckPerms-Gruppe: §e{group}",
             "§7→ LuckPerms Group: §e{group}");
@@ -158,8 +158,8 @@ public class Messages {
             "  UUID: {uuid}",
             "  UUID: {uuid}");
         addMessage("console.invite.whitelist",
-            "  Whitelist: ✓ Aktiviert",
-            "  Whitelist: ✓ Enabled");
+            "  Zur Whitelist hinzugefügt: ✓",
+            "  Added to Whitelist: ✓");
         addMessage("console.invite.group",
             "  LuckPerms-Gruppe: {group}",
             "  LuckPerms Group: {group}");
@@ -180,8 +180,8 @@ public class Messages {
             "  UUID: {uuid}",
             "  UUID: {uuid}");
         addMessage("console.uninvite.whitelist",
-            "  Whitelist: ✗ Deaktiviert",
-            "  Whitelist: ✗ Disabled");
+            "  Von Whitelist entfernt: ✓",
+            "  Removed from Whitelist: ✓");
         addMessage("console.uninvite.footer",
             "========================================",
             "========================================");

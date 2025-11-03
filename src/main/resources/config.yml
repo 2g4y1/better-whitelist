@@ -25,7 +25,7 @@ language: "de"
 # Should players be automatically added to a LuckPerms group?
 # true = Aktiviert / Enabled | false = Deaktiviert / Disabled
 luckperms:
-  enabled: true
+  enabled: false
   
   # Name der Standard-Gruppe, die neue Spieler erhalten sollen
   # Name of the default group that new players should receive
