@@ -1,0 +1,26 @@
+name: InvitePlugin
+version: '${project.version}'
+main: de.yourserver.inviteplugin.InvitePlugin
+api-version: '1.21'
+depend: [LuckPerms]
+author: YourName
+description: Whitelist-Plugin mit automatischer LuckPerms-Gruppenzuweisung
+website: https://github.com/yourname/inviteplugin
+
+commands:
+  invite:
+    description: Lädt einen Spieler auf den Server ein (whitelist + LuckPerms-Gruppe)
+    usage: /invite <Spielername>
+    permission: invite.use
+  uninvite:
+    description: Entfernt einen Spieler von der Whitelist
+    usage: /uninvite <Spielername>
+    permission: invite.admin
+
+permissions:
+  invite.use:
+    description: Erlaubt das Einladen von Spielern
+    default: false
+  invite.admin:
+    description: Erlaubt das Entfernen von Spielern von der Whitelist
+    default: op
