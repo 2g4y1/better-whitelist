@@ -18,6 +18,15 @@ public class UninviteCommand implements CommandExecutor {
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command,
                            @NotNull String label, @NotNull String[] args) {
 
+        // Permission check: Console always allowed, players need invite.admin
+        if (!(sender instanceof org.bukkit.command.ConsoleCommandSender) && !sender.hasPermission("invite.admin")) {
+            sender.sendMessage(plugin.createMessage(
+                plugin.getMessages().get("no_permission"),
+                NamedTextColor.RED
+            ));
+            return true;
+        }
+
         // Argument-Check
         if (args.length != 1) {
             sender.sendMessage(plugin.createMessage(

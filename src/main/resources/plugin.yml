@@ -11,13 +11,9 @@ commands:
   invite:
     description: Lädt einen Spieler auf den Server ein (whitelist + LuckPerms-Gruppe)
     usage: /invite <Spielername>
-    permission: invite.use
-    permission-message: §cDu hast keine Berechtigung, diesen Befehl zu verwenden!
   uninvite:
     description: Entfernt einen Spieler von der Whitelist
     usage: /uninvite <Spielername>
-    permission: invite.admin
-    permission-message: §cDu hast keine Berechtigung, diesen Befehl zu verwenden!
 
 permissions:
   invite.use:

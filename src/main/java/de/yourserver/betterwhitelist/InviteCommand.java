@@ -21,6 +21,15 @@ public class InviteCommand implements CommandExecutor {
         // Debug logging: who executed the command and with which args
         plugin.getLogger().info("InviteCommand invoked by '" + sender.getName() + "' with args: " + java.util.Arrays.toString(args));
 
+        // Permission check: Console always allowed, players need invite.use
+        if (!(sender instanceof org.bukkit.command.ConsoleCommandSender) && !sender.hasPermission("invite.use")) {
+            sender.sendMessage(plugin.createMessage(
+                plugin.getMessages().get("no_permission"),
+                net.kyori.adventure.text.format.NamedTextColor.RED
+            ));
+            return true;
+        }
+
         // Argument-Check
         if (args.length != 1) {
             sender.sendMessage(plugin.createMessage(

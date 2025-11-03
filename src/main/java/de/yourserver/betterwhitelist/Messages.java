@@ -81,6 +81,11 @@ public class Messages {
             "========================================",
             "========================================");
         
+        // GENERAL
+        addMessage("no_permission",
+            "§cDu hast keine Berechtigung, diesen Befehl zu verwenden!",
+            "§cYou don't have permission to use this command!");
+        
         // INVITE COMMAND
         addMessage("invite.usage",
             "§eVerwendung: /invite <Spielername>",
