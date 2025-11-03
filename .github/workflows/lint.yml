@@ -1,4 +1,4 @@
-name: Lint Code
+name: Code Quality Check
 
 on:
   push:
@@ -7,7 +7,7 @@ on:
     branches: [ main, develop ]
 
 jobs:
-  lint:
+  quality:
     runs-on: ubuntu-latest
     
     steps:
@@ -21,8 +21,8 @@ jobs:
         distribution: 'temurin'
         cache: maven
         
-    - name: Run Maven Compiler (Lint Check)
-      run: mvn compiler:compile --batch-mode
+    - name: Compile and check for compile errors
+      run: mvn clean compile --batch-mode
       
-    - name: Check for compilation warnings
-      run: mvn clean compile -Xlint:all --batch-mode
+    - name: Package and verify
+      run: mvn package --batch-mode -DskipTests
