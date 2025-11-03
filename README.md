@@ -1,877 +1,299 @@
-# 🎮 BetterWhitelist# 🎮 BetterWhitelist# BetterWhitelist
-
-
+# 🎮 BetterWhitelist
 
 <div align="center">
 
-
-
-**Ein konfigurierbares Minecraft-Plugin, das Spielern ermöglicht, Freunde einzuladen**<div align="center">Ein konfigurierbares Paper/Spigot Plugin für Minecraft, das das Whitelisten von Spielern vereinfacht und optional automatisch LuckPerms-Gruppen zuweist.
-
-
+**A configurable Minecraft plugin that allows players to invite friends**
 
 [![Minecraft](https://img.shields.io/badge/Minecraft-1.21.x-green.svg)](https://papermc.io/)
-
 [![Java](https://img.shields.io/badge/Java-21-orange.svg)](https://openjdk.org/)
+[![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-[![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)**Ein konfigurierbares Minecraft-Plugin, das Spielern ermöglicht, Freunde einzuladen**## Features
+[Features](#-features) • [Installation](#-installation) • [Configuration](#-configuration) • [Commands](#-commands) • [Download](#-download)
 
+[🇩🇪 Deutsche Version](README.md)
 
-
-[Features](#-features) • [Installation](#-installation) • [Konfiguration](#-konfiguration) • [Commands](#-commands) • [Download](#-download)
-
-
-
-[🇬🇧 English Version](README_EN.md)[![Minecraft](https://img.shields.io/badge/Minecraft-1.21.x-green.svg)](https://papermc.io/)- **Einfaches Whitelisting**: Spieler können mit einem einzigen Befehl eingeladen werden
-
-
-
-</div>[![Java](https://img.shields.io/badge/Java-21-orange.svg)](https://openjdk.org/)- **Konfigurierbare LuckPerms-Integration**: Optional können neue Spieler automatisch einer konfigurierbaren Gruppe zugewiesen werden
-
-
-
----[![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)- **Flexible Konfiguration**: Standard-Gruppe und LuckPerms-Nutzung über config.yml anpassbar
-
-
-
-## 📖 Über das Plugin- **Berechtigungssystem**: Zwei Berechtigungsstufen für normale User und Admins
-
-
-
-**BetterWhitelist** wurde entwickelt, um ein häufiges Problem auf privaten Minecraft-Servern zu lösen:[Features](#-features) • [Installation](#-installation) • [Konfiguration](#-konfiguration) • [Commands](#-commands) • [Download](#-download)- **Asynchrone Verarbeitung**: Keine Server-Lags durch blockierende Operationen
-
-
-
-> **Das Problem:** Spieler müssen immer einen Admin kontaktieren, wenn sie einen Freund auf den Server einladen möchten. Das ist umständlich und zeitaufwendig.- **Broadcast-Nachrichten**: Benachrichtigungen an berechtigte Spieler
-
-
-
-> **Die Lösung:** BetterWhitelist gibt vertrauenswürdigen Spielern die Möglichkeit, selbst Freunde zur Whitelist hinzuzufügen – ohne Admin-Rechte zu benötigen.</div>
-
-
-
-### ✨ Warum BetterWhitelist?## Anforderungen
-
-
-
-- 🤝 **Spieler-Freiheit**: Vertrauenswürdige Spieler können selbstständig Freunde einladen---
-
-- 🔒 **Sicherheit**: Berechtigungssystem verhindert Missbrauch
-
-- 🌍 **Mehrsprachig**: Unterstützt Deutsch und Englisch- **Minecraft**: 1.21.8 oder höher (kompatibel mit 1.21.x, inkl. 1.21.10)
-
-- ⚡ **Performant**: Asynchrone Verarbeitung, keine Server-Lags
-
-- 🎯 **Flexibel**: Optionale LuckPerms-Integration für automatische Gruppenzuweisung## 📖 Über das Plugin- **Server**: Paper, Purpur oder ein anderer Paper-Fork
-
-- 📝 **Einfach**: Intuitive Befehle und klare Nachrichten
-
-- **Java**: Version 21 oder höher
+</div>
 
 ---
 
-**BetterWhitelist** wurde entwickelt, um ein häufiges Problem auf privaten Minecraft-Servern zu lösen:- **Abhängigkeiten (optional)**: LuckPerms (falls LuckPerms-Integration gewünscht ist)
+## 📖 About the Plugin
 
-## 📸 Screenshots
+**BetterWhitelist** was developed to solve a common problem on private Minecraft servers:
 
+> **The Problem:** Players always have to contact an admin when they want to invite a friend to the server. This is cumbersome and time-consuming.
 
+> **The Solution:** BetterWhitelist gives trusted players the ability to add friends to the whitelist themselves – without needing admin rights.
+
+### ✨ Why BetterWhitelist?
+
+- 🤝 **Player Freedom**: Trusted players can independently invite friends
+- 🔒 **Security**: Permission system prevents abuse
+- 🌍 **Multilingual**: Supports German and English
+- ⚡ **Performant**: Asynchronous processing, no server lag
+- 🎯 **Flexible**: Optional LuckPerms integration for automatic group assignment
+- 📝 **Simple**: Intuitive commands and clear messages
+
+---
+
+## � Screenshots
 
 <div align="center">
-
-> **Das Problem:** Spieler müssen immer einen Admin kontaktieren, wenn sie einen Freund auf den Server einladen möchten. Das ist umständlich und zeitaufwendig.## Installation
 
 ![Ingame Screenshot](images/ingame-screenshot.png)
 
-
-
-*So sieht es aus, wenn ein Spieler eingeladen wird*
-
-> **Die Lösung:** BetterWhitelist gibt vertrauenswürdigen Spielern die Möglichkeit, selbst Freunde zur Whitelist hinzuzufügen – ohne Admin-Rechte zu benötigen.1. (Optional) LuckPerms auf deinem Server installieren, falls du die Gruppenzuweisung nutzen möchtest
+*What it looks like when a player gets invited*
 
 </div>
 
-2. Die `BetterWhitelist-<version>.jar` in den `plugins`-Ordner kopieren
-
 ---
 
-### ✨ Warum BetterWhitelist?3. Server neu starten (erstellt automatisch `plugins/BetterWhitelist/config.yml`)
+## �🚀 Features
 
-## 🚀 Features
+### Core Features
 
-4. Konfiguration nach Bedarf anpassen (siehe unten)
+| Feature | Description |
+|---------|-------------|
+| **🎫 Whitelist Management** | Easy adding/removing of players to/from the whitelist |
+| **🔐 Permission System** | Two levels: `invite.use` and `invite.admin` |
+| **🌐 Multilingual** | German and English fully supported |
+| **⚙️ Configurable** | All settings customizable via `config.yml` |
 
-### Kern-Features
+### LuckPerms Integration
 
-- 🤝 **Spieler-Freiheit**: Vertrauenswürdige Spieler können selbstständig Freunde einladen5. Berechtigungen vergeben (siehe unten)
+| Feature | Description |
+|---------|-------------|
+| **👥 Automatic Group Assignment** | New players automatically receive a configurable group |
+| **🔄 Optional** | LuckPerms can be completely disabled |
+| **📦 Flexible Configuration** | Default group freely selectable |
 
-| Feature | Beschreibung |
+### Technical Features
 
-|---------|--------------|- 🔒 **Sicherheit**: Berechtigungssystem verhindert Missbrauch
-
-| **🎫 Whitelist-Management** | Einfaches Hinzufügen/Entfernen von Spielern zur Whitelist |
-
-| **🔐 Berechtigungssystem** | Zwei Stufen: `invite.use` und `invite.admin` |- 🌍 **Mehrsprachig**: Unterstützt Deutsch und Englisch## Befehle
-
-| **🌐 Mehrsprachigkeit** | Deutsch und Englisch vollständig unterstützt |
-
-| **⚙️ Konfigurierbar** | Alle Einstellungen über `config.yml` anpassbar |- ⚡ **Performant**: Asynchrone Verarbeitung, keine Server-Lags
-
-
-
-### LuckPerms Integration- 🎯 **Flexibel**: Optionale LuckPerms-Integration für automatische Gruppenzuweisung### `/invite <Spielername>`
-
-
-
-| Feature | Beschreibung |- 📝 **Einfach**: Intuitive Befehle und klare NachrichtenLädt einen Spieler auf den Server ein.
-
-|---------|--------------|
-
-| **👥 Automatische Gruppenzuweisung** | Neue Spieler erhalten automatisch eine konfigurierbare Gruppe |
-
-| **🔄 Optional** | LuckPerms kann komplett deaktiviert werden |
-
-| **📦 Flexible Konfiguration** | Standard-Gruppe frei wählbar |---**Was passiert:**
-
-
-
-### Technische Features- Spieler wird zur Whitelist hinzugefügt
-
-
-
-| Feature | Beschreibung |## 🚀 Features- Falls in der Config aktiviert: Spieler erhält automatisch die konfigurierte Gruppe in LuckPerms (entspricht `/lp user <Username> parent set <gruppe>`)
-
-|---------|--------------|
-
-| **⚡ Async-Verarbeitung** | Keine Server-Lags durch blockierende Operationen |
-
-| **📡 Mojang-API** | Offizielle UUID-Abfrage wie bei `/whitelist add` |
-
-| **📢 Broadcast-System** | Benachrichtigung bei Spieler-Einladungen |### Kern-Features**Berechtigung:** `invite.use`
-
-| **🎨 Adventure API** | Moderne Text-Komponenten für bessere Darstellung |
-
-
+| Feature | Description |
+|---------|-------------|
+| **⚡ Async Processing** | No server lag from blocking operations |
+| **📡 Mojang API** | Official UUID lookup like `/whitelist add` |
+| **📢 Broadcast System** | Notifications for player invitations |
+| **🎨 Adventure API** | Modern text components for better presentation |
 
 ---
-
-| Feature | Beschreibung |**Beispiel:**
 
 ## 📥 Installation
 
-|---------|--------------|```
+### Step 1: Check Prerequisites
 
-### Schritt 1: Voraussetzungen prüfen
+- ✅ **Server**: Paper, Purpur, or another Paper fork (1.21.x)
+- ✅ **Java**: Version 21 or higher
+- ⭕ **Optional**: LuckPerms (if group assignment is desired)
 
-| **🎫 Whitelist-Management** | Einfaches Hinzufügen/Entfernen von Spielern zur Whitelist |/invite Steve
+### Step 2: Install Plugin
 
-- ✅ **Server**: Paper, Purpur oder ein anderer Paper-Fork (1.21.x)
+1. [**Download**](#-download) the latest `BetterWhitelist-x.x.x.jar`
+2. Copy the JAR file to your server's `plugins/` folder
+3. Restart the server
+4. The `config.yml` will be automatically created in `plugins/BetterWhitelist/`
 
-- ✅ **Java**: Version 21 oder höher| **🔐 Berechtigungssystem** | Zwei Stufen: `invite.use` und `invite.admin` |```
+### Step 3: Adjust Configuration
 
-- ⭕ **Optional**: LuckPerms (falls Gruppenzuweisung gewünscht ist)
+Open `plugins/BetterWhitelist/config.yml` and adjust the settings:
 
-| **🌐 Mehrsprachigkeit** | Deutsch und Englisch vollständig unterstützt |
-
-### Schritt 2: Plugin installieren
-
-| **⚙️ Konfigurierbar** | Alle Einstellungen über `config.yml` anpassbar |### `/uninvite <Spielername>`
-
-1. [**Download**](#-download) die neueste `BetterWhitelist-x.x.x.jar`
-
-2. Kopiere die JAR-Datei in den `plugins/`-Ordner deines ServersEntfernt einen Spieler von der Whitelist.
-
-3. Starte den Server neu
-
-4. Die `config.yml` wird automatisch in `plugins/BetterWhitelist/` erstellt### LuckPerms Integration
-
-
-
-### Schritt 3: Konfiguration anpassen**Berechtigung:** `invite.admin`
-
-
-
-Öffne `plugins/BetterWhitelist/config.yml` und passe die Einstellungen an:| Feature | Beschreibung |
-
-
-
-```yaml|---------|--------------|**Beispiel:**
-
-language: "de"  # oder "en" für Englisch
-
-| **👥 Automatische Gruppenzuweisung** | Neue Spieler erhalten automatisch eine konfigurierbare Gruppe |```
+```yaml
+language: "en"  # or "de" for German
 
 luckperms:
+  enabled: true              # Enable LuckPerms integration
+  default-group: "default"   # Default group for new players
+```
 
-  enabled: true              # LuckPerms-Integration aktivieren| **🔄 Optional** | LuckPerms kann komplett deaktiviert werden |/uninvite Steve
+### Step 4: Assign Permissions
 
-  default-group: "default"   # Standard-Gruppe für neue Spieler
-
-```| **📦 Flexible Konfiguration** | Standard-Gruppe frei wählbar |```
-
-
-
-### Schritt 4: Berechtigungen vergeben
-
-
-
-Vergib den Spielern oder Gruppen die benötigten Berechtigungen:### Technische Features## Berechtigungen
-
-
+Assign the required permissions to players or groups:
 
 ```bash
+# Players may invite friends
+/lp group trusted permission set invite.use true
 
-# Spieler dürfen Freunde einladen
-
-/lp group trusted permission set invite.use true| Feature | Beschreibung |### `invite.use`
-
-
-
-# Admins dürfen Spieler entfernen|---------|--------------|- **Standard**: `false` (muss explizit vergeben werden)
-
+# Admins may remove players
 /lp group admin permission set invite.admin true
-
-```| **⚡ Async-Verarbeitung** | Keine Server-Lags durch blockierende Operationen |- **Beschreibung**: Erlaubt das Einladen von Spielern
-
-
-
-✅ **Fertig!** Das Plugin ist einsatzbereit.| **📡 Mojang-API** | Offizielle UUID-Abfrage wie bei `/whitelist add` |- **Empfohlen für**: Trusted Players, Moderatoren, Admins
-
-
-
----| **📢 Broadcast-System** | Benachrichtigung bei Spieler-Einladungen |
-
-
-
-## ⚙️ Konfiguration| **🎨 Adventure API** | Moderne Text-Komponenten für bessere Darstellung |**LuckPerms Befehl:**
-
-
-
-### Automatische Config-Erstellung```
-
-
-
-Die `config.yml` wird beim **ersten Start automatisch erstellt**. Du musst nichts manuell erstellen!---/lp group <gruppenname> permission set invite.use true
-
-
-
-Speicherort: `plugins/BetterWhitelist/config.yml````
-
-
-
-### Komplette Config-Datei## 📥 Installationoder für einzelne Spieler:
-
-
-
-```yaml```
-
-# ============================================
-
-# BetterWhitelist - Konfiguration### Schritt 1: Voraussetzungen prüfen/lp user <username> permission set invite.use true
-
-# ============================================
-
 ```
 
+✅ **Done!** The plugin is ready to use.
+
+---
+
+## ⚙️ Configuration
+
+### Automatic Config Creation
+
+The `config.yml` is **automatically created** on first start. You don't need to create anything manually!
+
+Location: `plugins/BetterWhitelist/config.yml`
+
+### Complete Config File
+
+```yaml
+# ============================================
+# BetterWhitelist - Configuration
 # ============================================
 
-# Sprache / Language- ✅ **Server**: Paper, Purpur oder ein anderer Paper-Fork (1.21.x)
-
+# ============================================
+# Language / Sprache
 # ============================================
 
-- ✅ **Java**: Version 21 oder höher### `invite.admin`
-
+# Choose the language for all plugin messages
 # Wähle die Sprache für alle Plugin-Nachrichten
-
-# Choose the language for all plugin messages- ⭕ **Optional**: LuckPerms (falls Gruppenzuweisung gewünscht)- **Standard**: `op` (nur für Operator)
-
 # 
-
-# Verfügbare Sprachen / Available languages:- **Beschreibung**: Erlaubt das Entfernen von Spielern (uninvite)
-
+# Available languages / Verfügbare Sprachen:
 #   - de (Deutsch)
-
-#   - en (English)### Schritt 2: Plugin installieren- **Empfohlen für**: Admins, Server-Owner
-
-language: "de"
-
-
+#   - en (English)
+language: "en"
 
 # ============================================
-
-# LuckPerms Integration1. [**Download**](#-download) die neueste `BetterWhitelist-x.x.x.jar`**LuckPerms Befehl:**
-
+# LuckPerms Integration
 # ============================================
 
-2. Kopiere die JAR-Datei in den `plugins/`-Ordner deines Servers```
-
+# Should players be automatically added to a LuckPerms group?
 # Sollen Spieler automatisch zu einer LuckPerms-Gruppe hinzugefügt werden?
-
-# Should players be automatically added to a LuckPerms group?3. Starte den Server neu/lp group admin permission set invite.admin true
-
-# true = Aktiviert / Enabled | false = Deaktiviert / Disabled
-
-luckperms:4. Die `config.yml` wird automatisch erstellt in `plugins/BetterWhitelist/````
-
+# true = Enabled / Aktiviert | false = Disabled / Deaktiviert
+luckperms:
   enabled: true
-
   
-
+  # Name of the default group that new players should receive
   # Name der Standard-Gruppe, die neue Spieler erhalten sollen
-
-  # Name of the default group that new players should receive### Schritt 3: Konfiguration anpassen## Konfiguration
-
-  # Diese Gruppe muss in LuckPerms existieren!
-
   # This group must exist in LuckPerms!
-
-  # Beispiele / Examples: default, member, player, newbie
-
-  default-group: "default"Öffne `plugins/BetterWhitelist/config.yml` und passe die Einstellungen an:Nach dem ersten Start wird automatisch die Datei `plugins/BetterWhitelist/config.yml` erstellt:
-
+  # Diese Gruppe muss in LuckPerms existieren!
+  # Examples / Beispiele: default, member, player, newbie
+  default-group: "default"
 ```
 
-
-
-### Konfigurations-Optionen
-
-```yaml```yaml
+### Configuration Options
 
 #### 🌐 `language`
 
-language: "de"  # oder "en" für Englisch# ============================================
+- **Type**: String
+- **Default**: `"en"`
+- **Options**: `"de"` (German), `"en"` (English)
+- **Description**: Sets the language for all plugin messages
 
-- **Typ**: String
+#### ⚙️ `luckperms.enabled`
 
-- **Standard**: `"de"`# BetterWhitelist - Konfiguration
-
-- **Optionen**: `"de"` (Deutsch), `"en"` (Englisch)
-
-- **Beschreibung**: Legt die Sprache für alle Plugin-Nachrichten festluckperms:# ============================================
-
-
-
-#### ⚙️ `luckperms.enabled`  enabled: true              # LuckPerms-Integration aktivieren
-
-
-
-- **Typ**: Boolean  default-group: "default"   # Standard-Gruppe für neue Spieler# LuckPerms Integration
-
-- **Standard**: `true`
-
-- **Beschreibung**: Aktiviert/Deaktiviert die automatische LuckPerms-Gruppenzuweisung```luckperms:
-
-- **Hinweis**: Bei `false` werden Spieler nur zur Whitelist hinzugefügt, ohne Gruppenänderung
-
-  # Sollen Spieler automatisch zu einer LuckPerms-Gruppe hinzugefügt werden?
+- **Type**: Boolean
+- **Default**: `true`
+- **Description**: Enables/Disables automatic LuckPerms group assignment
+- **Note**: When `false`, players are only added to the whitelist without group changes
 
 #### 👥 `luckperms.default-group`
 
-### Schritt 4: Berechtigungen vergeben  # true = Aktiviert | false = Deaktiviert
+- **Type**: String
+- **Default**: `"default"`
+- **Description**: Name of the group that invited players receive
+- **Important**: This group must exist in LuckPerms!
 
-- **Typ**: String
+### Creating a Group in LuckPerms
 
-- **Standard**: `"default"`  enabled: true
+If the configured group doesn't exist yet:
 
-- **Beschreibung**: Name der Gruppe, die eingeladene Spieler erhalten
+```bash
+# Create group
+/lp creategroup mygroup
 
-- **Wichtig**: Diese Gruppe muss in LuckPerms existieren!Weise Spielern oder Gruppen die benötigten Berechtigungen zu:  
+# Set permissions
+/lp group mygroup permission set minecraft.command.help true
+```
 
+Check available groups with:
 
-
-### Gruppe in LuckPerms erstellen  # Name der Standard-Gruppe, die neue Spieler erhalten sollen
-
-
-
-Falls die konfigurierte Gruppe noch nicht existiert:```bash  # Diese Gruppe muss in LuckPerms existieren!
-
-
-
-```bash# Spieler dürfen Freunde einladen  # Beispiele: default, member, spieler, newbie
-
-# Gruppe erstellen
-
-/lp creategroup meinegruppe/lp group trusted permission set invite.use true  default-group: "default"
-
-
-
-# Berechtigungen setzen```
-
-/lp group meinegruppe permission set minecraft.command.help true
-
-```# Admins dürfen Spieler entfernen
-
-
-
-Verfügbare Gruppen prüfen mit:/lp group admin permission set invite.admin true### Konfigurationsoptionen
-
-
-
-```bash```
-
+```bash
 /lp listgroups
-
-```#### `luckperms.enabled`
-
-
-
----✅ **Fertig!** Das Plugin ist einsatzbereit.- **Standard**: `true`
-
-
-
-## 🎮 Commands- **Beschreibung**: Aktiviert oder deaktiviert die automatische LuckPerms-Gruppenzuweisung
-
-
-
-### `/invite <Spielername>`---- **Hinweis**: Wenn auf `false` gesetzt, werden Spieler nur zur Whitelist hinzugefügt, ohne Gruppenänderungen
-
-
-
-**Beschreibung**: Lädt einen Spieler auf den Server ein
-
-
-
-**Was passiert:**## ⚙️ Konfiguration#### `luckperms.default-group`
-
-- ✅ Spieler wird zur Whitelist hinzugefügt
-
-- ✅ (Optional) Spieler erhält die konfigurierte LuckPerms-Gruppe- **Standard**: `"default"`
-
-- ✅ Broadcast an alle Spieler mit `invite.use`-Berechtigung
-
-### Automatische Config-Erstellung- **Beschreibung**: Name der Gruppe, die eingeladene Spieler erhalten sollen
-
-**Berechtigung**: `invite.use`
-
-- **Wichtig**: Diese Gruppe muss in LuckPerms existieren! Überprüfe mit `/lp listgroups`
-
-**Beispiele:**
-
-```bashDie `config.yml` wird beim ersten Start **automatisch erstellt**. Du musst nichts manuell anlegen!
-
-/invite Steve
-
-/invite Alex### Gruppe in LuckPerms erstellen
-
-/invite Notch
-
-```Speicherort: `plugins/BetterWhitelist/config.yml`
-
-
-
-**Ausgabe:**Falls die konfigurierte Gruppe noch nicht existiert:
-
 ```
-
-✓ Spieler Steve wurde erfolgreich eingeladen!### Vollständige Config-Datei
-
-→ Whitelist: Aktiviert
-
-→ LuckPerms-Gruppe: default```bash
-
-```
-
-```yaml/lp creategroup <gruppenname>
 
 ---
 
-# ============================================/lp group <gruppenname> permission set <permissions>
+## 🎮 Commands
 
-### `/uninvite <Spielername>`
+### `/invite <playername>`
 
-# BetterWhitelist - Konfiguration```
+**Description**: Invites a player to the server
 
-**Beschreibung**: Entfernt einen Spieler von der Whitelist
+**What happens:**
+- ✅ Player is added to the whitelist
+- ✅ (Optional) Player receives the configured LuckPerms group
+- ✅ Broadcast to all players with `invite.use` permission
 
-# ============================================
+**Permission**: `invite.use`
 
-**Was passiert:**
+**Examples:**
+```bash
+/invite Steve
+/invite Alex
+/invite Notch
+```
 
-- ❌ Spieler wird von der Whitelist entfernt## Kompilierung
+**Output:**
+```
+✓ Player Steve was successfully invited!
+→ Whitelist: Enabled
+→ LuckPerms Group: default
+```
 
-- 📢 Broadcast an alle Spieler mit `invite.admin`-Berechtigung
+---
 
-# ============================================
+### `/uninvite <playername>`
 
-**Berechtigung**: `invite.admin`
+**Description**: Removes a player from the whitelist
 
-# Sprache / Language**Hinweis**: Für die Kompilierung wird Java 21 benötigt, da Paper 1.21.x dies erfordert.
+**What happens:**
+- ❌ Player is removed from the whitelist
+- 📢 Broadcast to all players with `invite.admin` permission
 
-**Beispiele:**
+**Permission**: `invite.admin`
 
-```bash# ============================================
-
+**Examples:**
+```bash
 /uninvite Steve
-
-/uninvite Alex```bash
-
-```
-
-# Wähle die Sprache für alle Plugin-Nachrichtenmvn clean package
-
-**Ausgabe:**
-
-```# Choose the language for all plugin messages```
-
-✓ Spieler Steve wurde von der Whitelist entfernt!
-
-```# 
-
-
-
----# Verfügbare Sprachen / Available languages:Die fertige JAR-Datei findest du dann im `target/`-Ordner.
-
-
-
-## 🔐 Berechtigungen#   - de (Deutsch)
-
-
-
-### Übersicht#   - en (English)### Kompilierung mit Docker (wenn Java 21 nicht verfügbar ist)
-
-
-
-| Berechtigung | Standard | Beschreibung |language: "de"
-
-|--------------|----------|--------------|
-
-| `invite.use` | `false` | Erlaubt das Einladen von Spielern |```bash
-
-| `invite.admin` | `false` | Erlaubt das Entfernen von Spielern |
-
-# ============================================docker run --rm -v "$(pwd)":/app -w /app maven:3.9-eclipse-temurin-21 mvn clean package
-
-### Empfohlene Konfiguration
-
-# LuckPerms Integration```
-
-#### Für Trusted Players
-
-# ============================================
-
-```bash
-
-# Einzelne Spieler## Verwendete APIs
-
-/lp user Steve permission set invite.use true
-
-# Sollen Spieler automatisch zu einer LuckPerms-Gruppe hinzugefügt werden?
-
-# Ganze Gruppe
-
-/lp group trusted permission set invite.use true# Should players be automatically added to a LuckPerms group?- **Paper API**: 1.21.8-R0.1-SNAPSHOT (aktuelle stabile Version, kompatibel mit 1.21.x)
-
-/lp user Steve parent add trusted
-
-```# true = Aktiviert / Enabled | false = Deaktiviert / Disabled- **LuckPerms API**: 5.4 (aktuelle stabile Version)
-
-
-
-#### Für Administratorenluckperms:- **Java**: 21 (erforderlich für Paper 1.21.x)
-
-
-
-```bash  enabled: true- **Maven Compiler Plugin**: 3.13.0
-
-# Admins bekommen beide Berechtigungen
-
-/lp group admin permission set invite.use true  - **Maven Shade Plugin**: 3.6.0
-
-/lp group admin permission set invite.admin true
-
-```  # Name der Standard-Gruppe, die neue Spieler erhalten sollen
-
-
-
-#### Für Moderatoren  # Name of the default group that new players should receive## Support
-
-
-
-```bash  # Diese Gruppe muss in LuckPerms existieren!
-
-# Moderatoren können nur einladen, nicht entfernen
-
-/lp group moderator permission set invite.use true  # This group must exist in LuckPerms!Bei Problemen oder Fragen:
-
-```
-
-  # Beispiele / Examples: default, member, spieler, newbie1. Überprüfe die Server-Logs (`logs/latest.log`)
-
----
-
-  default-group: "default"2. Stelle sicher, dass LuckPerms korrekt installiert ist
-
-## 📦 Download
-
-```3. Überprüfe die Berechtigungen mit `/lp user <username> permission check invite.use`
-
-### Aktuelle Version
-
-
-
-**Version**: 0.0.2
-
-### Konfigurationsoptionen## Lizenz
-
-**Download**: [GitHub Releases](https://github.com/2g4y1/better-whitelist/releases)
-
-
-
-### Changelog
-
-#### 🌐 `language`Dieses Plugin wurde für private Zwecke erstellt. Frei verwendbar und anpassbar.
-
-#### Version 0.0.2
-
-- ➕ Mehrsprachigkeit hinzugefügt (Deutsch/Englisch)
-
-- ➕ Konfigurationsdatei mit Sprachauswahl
-
-- ➕ LuckPerms-Integration ist nun optional konfigurierbar- **Typ**: String## Changelog
-
-- ➕ Standard-Gruppe ist nun konfigurierbar
-
-- 🔄 LuckPerms ist nun eine optionale Abhängigkeit (`softdepend` statt `depend`)- **Standard**: `"de"`
-
-- 📝 README komplett überarbeitet
-
-- **Optionen**: `"de"` (Deutsch), `"en"` (English)### Version 0.0.2
-
-#### Version 0.0.1
-
-- 🎉 Erstes Release- **Beschreibung**: Legt die Sprache für alle Plugin-Nachrichten fest- Plugin umbenannt zu BetterWhitelist
-
-- ✨ `/invite`-Befehl mit Whitelist-Funktion
-
-- ✨ `/uninvite`-Befehl zum Entfernen- Konfigurationsdatei hinzugefügt (`config.yml`)
-
-- ✨ Automatische LuckPerms-Gruppenzuweisung
-
-- ✨ Berechtigungssystem#### ⚙️ `luckperms.enabled`- LuckPerms-Integration ist jetzt optional konfigurierbar
-
-- ✨ Broadcast-Nachrichten
-
-- Standard-Gruppe ist jetzt konfigurierbar
-
----
-
-- **Typ**: Boolean- LuckPerms ist jetzt eine optionale Abhängigkeit (softdepend statt depend)
-
-## 🛠️ Kompilierung
-
-- **Standard**: `true`
-
-### Voraussetzungen
-
-- **Beschreibung**: Aktiviert/Deaktiviert die automatische LuckPerms-Gruppenzuweisung### Version 0.0.1
-
-- **Java 21** (erforderlich für Paper 1.21.x)
-
-- **Maven 3.6+**- **Hinweis**: Bei `false` werden Spieler nur zur Whitelist hinzugefügt, ohne Gruppenänderungen- Initiales Release als InvitePlugin
-
-
-
-### Mit Maven- `/invite` Command mit Whitelist-Funktion
-
-
-
-```bash#### 👥 `luckperms.default-group`- `/uninvite` Command zum Entfernen
-
-mvn clean package
-
-```- Automatische LuckPerms-Gruppenzuweisung
-
-
-
-Die fertige JAR-Datei findest du dann im `target/`-Ordner.- **Typ**: String- Berechtigungssystem
-
-
-
-### Mit Docker (falls Java 21 nicht verfügbar)- **Standard**: `"default"`- Broadcast-Nachrichten
-
-
-
-```bash- **Beschreibung**: Name der Gruppe, die eingeladene Spieler erhalten
-
-docker run --rm -v "$(pwd)":/app -w /app maven:3.9-eclipse-temurin-21 mvn clean package- **Wichtig**: Diese Gruppe muss in LuckPerms existieren!
-
-```
-
-### Gruppe in LuckPerms erstellen
-
----
-
-Falls die konfigurierte Gruppe noch nicht existiert:
-
-## 🐛 Troubleshooting
-
-```bash
-
-### Problem: "LuckPerms nicht gefunden"# Gruppe erstellen
-
-/lp creategroup meingruppe
-
-**Lösung**:
-
-1. Prüfe, ob LuckPerms installiert ist: `/plugins`# Berechtigungen setzen
-
-2. Falls nicht benötigt, in `config.yml` setzen: `luckperms.enabled: false`/lp group meingruppe permission set minecraft.command.help true
-
-```
-
-### Problem: "Gruppe existiert nicht in LuckPerms"
-
-Überprüfe verfügbare Gruppen mit:
-
-**Lösung**:
-
-1. Verfügbare Gruppen prüfen: `/lp listgroups````bash
-
-2. Gruppe erstellen: `/lp creategroup <name>`/lp listgroups
-
-3. Oder `luckperms.default-group` in `config.yml` ändern```
-
-
-
-### Problem: "Spieler nicht gefunden"---
-
-
-
-**Lösung**:## 🎮 Commands
-
-- Stelle sicher, dass der Spielername korrekt geschrieben ist
-
-- Der Spieler muss ein gültiger Minecraft-Account sein### `/invite <Spielername>`
-
-- Prüfe die Mojang-API-Erreichbarkeit
-
-**Beschreibung**: Lädt einen Spieler auf den Server ein
-
-### Problem: Berechtigungen funktionieren nicht
-
-**Was passiert:**
-
-**Lösung**:- ✅ Spieler wird zur Whitelist hinzugefügt
-
-```bash- ✅ (Optional) Spieler erhält die konfigurierte LuckPerms-Gruppe
-
-# Berechtigung prüfen- ✅ Broadcast an alle Spieler mit `invite.use` Berechtigung
-
-/lp user <username> permission check invite.use
-
-**Berechtigung**: `invite.use`
-
-# Berechtigung setzen
-
-/lp user <username> permission set invite.use true**Beispiele:**
-
-``````bash
-
-/invite Steve
-
----/invite Alex
-
-/invite Notch
-
-## 📞 Support```
-
-
-
-Bei Problemen oder Fragen:**Ausgabe:**
-
-```
-
-1. 📖 Schaue in den [Troubleshooting](#-troubleshooting)-Bereich✓ Spieler Steve wurde erfolgreich eingeladen!
-
-2. 🔍 Sieh in die Server-Logs (`logs/latest.log`)→ Whitelist: Aktiviert
-
-3. 🐛 Erstelle ein [GitHub Issue](https://github.com/2g4y1/better-whitelist/issues)→ LuckPerms-Gruppe: default
-
-```
-
----
-
----
-
-## 📄 Lizenz
-
-### `/uninvite <Spielername>`
-
-Dieses Plugin wurde für private Zwecke erstellt. Frei nutzbar und anpassbar.
-
-**Beschreibung**: Entfernt einen Spieler von der Whitelist
-
----
-
-**Was passiert:**
-
-## 🙏 Verwendete APIs- ❌ Spieler wird von der Whitelist entfernt
-
-- 📢 Broadcast an alle Spieler mit `invite.admin` Berechtigung
-
-- **Paper API**: 1.21.10-R0.1-SNAPSHOT
-
-- **LuckPerms API**: 5.4**Berechtigung**: `invite.admin`
-
-- **Adventure API**: Für moderne Text-Komponenten
-
-- **Mojang API**: Für UUID-Abfragen**Beispiele:**
-
-```bash
-
----/uninvite Steve
-
 /uninvite Alex
-
-<div align="center">```
-
-
-
-**Entwickelt mit ❤️ für die Minecraft-Community****Ausgabe:**
-
 ```
 
-[⬆ Zurück nach oben](#-betterwhitelist)✓ Spieler Steve wurde von der Whitelist entfernt!
-
+**Output:**
 ```
-
-</div>
+✓ Player Steve was removed from the whitelist!
+```
 
 ---
 
-## 🔐 Berechtigungen
+## 🔐 Permissions
 
-### Übersicht
+### Overview
 
-| Berechtigung | Standard | Beschreibung |
-|-------------|----------|--------------|
-| `invite.use` | `false` | Erlaubt das Einladen von Spielern |
-| `invite.admin` | `false` | Erlaubt das Entfernen von Spielern |
+| Permission | Default | Description |
+|-----------|---------|-------------|
+| `invite.use` | `false` | Allows inviting players |
+| `invite.admin` | `false` | Allows removing players |
 
-### Empfohlene Konfiguration
+### Recommended Configuration
 
-#### Für vertrauenswürdige Spieler
+#### For Trusted Players
 
 ```bash
-# Einzelne Spieler
+# Individual players
 /lp user Steve permission set invite.use true
 
-# Ganze Gruppe
+# Whole group
 /lp group trusted permission set invite.use true
 /lp user Steve parent add trusted
 ```
 
-#### Für Administratoren
+#### For Administrators
 
 ```bash
-# Admins erhalten beide Berechtigungen
+# Admins get both permissions
 /lp group admin permission set invite.use true
 /lp group admin permission set invite.admin true
 ```
 
-#### Für Moderatoren
+#### For Moderators
 
 ```bash
-# Moderatoren nur einladen, nicht entfernen
+# Moderators can only invite, not remove
 /lp group moderator permission set invite.use true
 ```
 
@@ -879,7 +301,7 @@ Dieses Plugin wurde für private Zwecke erstellt. Frei nutzbar und anpassbar.
 
 ## 📦 Download
 
-### Neueste Version
+### Latest Version
 
 **Version**: 0.0.2
 
@@ -888,39 +310,39 @@ Dieses Plugin wurde für private Zwecke erstellt. Frei nutzbar und anpassbar.
 ### Changelog
 
 #### Version 0.0.2
-- ➕ Mehrsprachigkeit hinzugefügt (Deutsch/Englisch)
-- ➕ Konfigurationsdatei mit Sprachauswahl
-- ➕ LuckPerms-Integration ist jetzt optional konfigurierbar
-- ➕ Standard-Gruppe ist jetzt konfigurierbar
-- 🔄 LuckPerms ist jetzt eine optionale Abhängigkeit (`softdepend` statt `depend`)
-- 📝 README komplett überarbeitet
+- ➕ Added multilingual support (German/English)
+- ➕ Configuration file with language selection
+- ➕ LuckPerms integration is now optionally configurable
+- ➕ Default group is now configurable
+- 🔄 LuckPerms is now an optional dependency (`softdepend` instead of `depend`)
+- 📝 README completely revised
 
 #### Version 0.0.1
-- 🎉 Initiales Release
-- ✨ `/invite` Command mit Whitelist-Funktion
-- ✨ `/uninvite` Command zum Entfernen
-- ✨ Automatische LuckPerms-Gruppenzuweisung
-- ✨ Berechtigungssystem
-- ✨ Broadcast-Nachrichten
+- 🎉 Initial release
+- ✨ `/invite` command with whitelist function
+- ✨ `/uninvite` command for removal
+- ✨ Automatic LuckPerms group assignment
+- ✨ Permission system
+- ✨ Broadcast messages
 
 ---
 
-## 🛠️ Kompilierung
+## 🛠️ Compilation
 
-### Voraussetzungen
+### Prerequisites
 
-- **Java 21** (erforderlich für Paper 1.21.x)
+- **Java 21** (required for Paper 1.21.x)
 - **Maven 3.6+**
 
-### Mit Maven
+### With Maven
 
 ```bash
 mvn clean package
 ```
 
-Die fertige JAR-Datei findest du dann im `target/`-Ordner.
+The finished JAR file can then be found in the `target/` folder.
 
-### Mit Docker (wenn Java 21 nicht verfügbar)
+### With Docker (if Java 21 is not available)
 
 ```bash
 docker run --rm -v "$(pwd)":/app -w /app maven:3.9-eclipse-temurin-21 mvn clean package
@@ -930,34 +352,34 @@ docker run --rm -v "$(pwd)":/app -w /app maven:3.9-eclipse-temurin-21 mvn clean 
 
 ## 🐛 Troubleshooting
 
-### Problem: "LuckPerms wurde nicht gefunden"
+### Problem: "LuckPerms not found"
 
-**Lösung**:
-1. Überprüfe, ob LuckPerms installiert ist: `/plugins`
-2. Wenn nicht benötigt, setze in `config.yml`: `luckperms.enabled: false`
+**Solution**:
+1. Check if LuckPerms is installed: `/plugins`
+2. If not needed, set in `config.yml`: `luckperms.enabled: false`
 
-### Problem: "Gruppe existiert nicht in LuckPerms"
+### Problem: "Group does not exist in LuckPerms"
 
-**Lösung**:
-1. Überprüfe verfügbare Gruppen: `/lp listgroups`
-2. Erstelle die Gruppe: `/lp creategroup <name>`
-3. Oder ändere `luckperms.default-group` in der `config.yml`
+**Solution**:
+1. Check available groups: `/lp listgroups`
+2. Create the group: `/lp creategroup <name>`
+3. Or change `luckperms.default-group` in `config.yml`
 
-### Problem: "Spieler wurde nicht gefunden"
+### Problem: "Player not found"
 
-**Lösung**:
-- Stelle sicher, dass der Spielername korrekt geschrieben ist
-- Der Spieler muss ein gültiger Minecraft-Account sein
-- Überprüfe die Mojang-API-Erreichbarkeit
+**Solution**:
+- Make sure the player name is spelled correctly
+- The player must be a valid Minecraft account
+- Check Mojang API accessibility
 
-### Problem: Berechtigungen funktionieren nicht
+### Problem: Permissions not working
 
-**Lösung**:
+**Solution**:
 ```bash
-# Berechtigung prüfen
+# Check permission
 /lp user <username> permission check invite.use
 
-# Berechtigung setzen
+# Set permission
 /lp user <username> permission set invite.use true
 ```
 
@@ -965,33 +387,33 @@ docker run --rm -v "$(pwd)":/app -w /app maven:3.9-eclipse-temurin-21 mvn clean 
 
 ## 📞 Support
 
-Bei Problemen oder Fragen:
+For problems or questions:
 
-1. 📖 Überprüfe die [Troubleshooting](#-troubleshooting)-Sektion
-2. 🔍 Schaue in die Server-Logs (`logs/latest.log`)
-3. 🐛 Öffne ein [GitHub Issue](https://github.com/2g4y1/better-whitelist/issues)
-
----
-
-## 📄 Lizenz
-
-Dieses Plugin wurde für private Zwecke erstellt. Frei verwendbar und anpassbar.
+1. 📖 Check the [Troubleshooting](#-troubleshooting) section
+2. 🔍 Look in the server logs (`logs/latest.log`)
+3. 🐛 Open a [GitHub Issue](https://github.com/2g4y1/better-whitelist/issues)
 
 ---
 
-## 🙏 Verwendete APIs
+## 📄 License
+
+This plugin was created for private purposes. Free to use and customize.
+
+---
+
+## 🙏 Used APIs
 
 - **Paper API**: 1.21.10-R0.1-SNAPSHOT
 - **LuckPerms API**: 5.4
-- **Adventure API**: Für moderne Text-Komponenten
-- **Mojang API**: Für UUID-Abfragen
+- **Adventure API**: For modern text components
+- **Mojang API**: For UUID lookups
 
 ---
 
 <div align="center">
 
-**Entwickelt mit ❤️ für die Minecraft-Community**
+**Developed with ❤️ for the Minecraft Community**
 
-[⬆ Nach oben](#-betterwhitelist)
+[⬆ Back to Top](#-betterwhitelist)
 
 </div>
