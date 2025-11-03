@@ -35,7 +35,7 @@
 
 ---
 
-## � Screenshots
+## Screenshots
 
 <div align="center">
 
@@ -47,7 +47,7 @@
 
 ---
 
-## �🚀 Features
+## 🚀 Features
 
 ### Core Features
 
