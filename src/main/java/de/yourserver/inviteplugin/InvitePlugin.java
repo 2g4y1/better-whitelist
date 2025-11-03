@@ -68,38 +68,79 @@ public class InvitePlugin extends JavaPlugin {
     /**
      * Fügt einen Spieler zur Whitelist hinzu und weist ihm die default-Gruppe zu
      * Holt die UUID über die Mojang-API, ähnlich wie /whitelist add
+     * Diese Methode läuft async und führt die Whitelist-Operation auf dem Main-Thread aus
      *
      * @param playerName Name des Spielers
-     * @return true bei Erfolg, false bei Fehler
+     * @param sender Der CommandSender für Feedback
      */
-    public boolean invitePlayer(String playerName) {
+    public void invitePlayer(String playerName, org.bukkit.command.CommandSender sender) {
         try {
-            // UUID von der Mojang-API holen
+            // UUID von der Mojang-API holen (läuft bereits async)
             UUID uuid = getUUIDFromMojang(playerName);
             if (uuid == null) {
                 getLogger().warning("Spieler '" + playerName + "' existiert nicht oder konnte nicht gefunden werden!");
-                return false;
+                getServer().getScheduler().runTask(this, () -> {
+                    sender.sendMessage(createMessage(
+                        "§c✗ Spieler §e" + playerName + "§c wurde nicht gefunden!",
+                        NamedTextColor.RED
+                    ));
+                    sender.sendMessage(createMessage(
+                        "§7Stelle sicher, dass der Name korrekt geschrieben ist.",
+                        NamedTextColor.GRAY
+                    ));
+                });
+                return;
             }
 
-            // OfflinePlayer mit der echten UUID erstellen
+            // OfflinePlayer mit UUID UND Namen erstellen (Paper API)
             OfflinePlayer offlinePlayer = Bukkit.getOfflinePlayer(uuid);
-
+            
             // Whitelist muss auf dem Main-Thread gesetzt werden
-            offlinePlayer.setWhitelisted(true);
+            getServer().getScheduler().runTask(this, () -> {
+                // Verwende den nativen whitelist Befehl, um sicherzustellen, dass der Name gespeichert wird
+                getServer().dispatchCommand(getServer().getConsoleSender(), "whitelist add " + playerName);
 
-            // Konsolennachricht
-            getLogger().info("========================================");
-            getLogger().info("  SPIELER EINGELADEN");
-            getLogger().info("  Spieler: " + playerName);
-            getLogger().info("  UUID: " + uuid);
-            getLogger().info("  Whitelist: ✓ Aktiviert");
-            getLogger().info("  LuckPerms-Gruppe: default");
-            getLogger().info("========================================");
+
+                // Konsolennachricht
+                getLogger().info("========================================");
+                getLogger().info("  SPIELER EINGELADEN");
+                getLogger().info("  Spieler: " + playerName);
+                getLogger().info("  UUID: " + uuid);
+                getLogger().info("  Whitelist: ✓ Aktiviert");
+                getLogger().info("  LuckPerms-Gruppe: default");
+                getLogger().info("========================================");
+
+                // Feedback an Sender
+                sender.sendMessage(createMessage(
+                    "§a✓ Spieler §e" + playerName + "§a wurde erfolgreich eingeladen!",
+                    NamedTextColor.GREEN
+                ));
+                sender.sendMessage(createMessage(
+                    "§7→ Whitelist: §aAktiviert",
+                    NamedTextColor.GRAY
+                ));
+                sender.sendMessage(createMessage(
+                    "§7→ LuckPerms-Gruppe: §edefault",
+                    NamedTextColor.GRAY
+                ));
+
+                // Broadcast an alle Online-Spieler mit der Permission
+                getServer().getOnlinePlayers().stream()
+                    .filter(p -> p.hasPermission("invite.use"))
+                    .forEach(p -> {
+                        if (!p.equals(sender)) {
+                            p.sendMessage(createMessage(
+                                "§7[§aInvite§7] §e" + sender.getName() +
+                                " §7hat §e" + playerName + " §7eingeladen.",
+                                NamedTextColor.GRAY
+                            ));
+                        }
+                    });
+            });
 
             // LuckPerms-Gruppe setzen (läuft bereits async)
             setPlayerGroup(offlinePlayer, "default");
 
-            return true;
         } catch (Exception e) {
             getLogger().severe("========================================");
             getLogger().severe("  FEHLER beim Einladen!");
@@ -107,7 +148,17 @@ public class InvitePlugin extends JavaPlugin {
             getLogger().severe("  Fehler: " + e.getMessage());
             getLogger().severe("========================================");
             e.printStackTrace();
-            return false;
+            
+            getServer().getScheduler().runTask(this, () -> {
+                sender.sendMessage(createMessage(
+                    "§c✗ Fehler beim Einladen von §e" + playerName + "§c!",
+                    NamedTextColor.RED
+                ));
+                sender.sendMessage(createMessage(
+                    "§7Bitte überprüfe die Logs für weitere Informationen.",
+                    NamedTextColor.GRAY
+                ));
+            });
         }
     }
 
@@ -164,39 +215,81 @@ public class InvitePlugin extends JavaPlugin {
     /**
      * Entfernt einen Spieler von der Whitelist
      * Holt die UUID über die Mojang-API
+     * Diese Methode läuft async und führt die Whitelist-Operation auf dem Main-Thread aus
      *
      * @param playerName Name des Spielers
-     * @return true bei Erfolg, false bei Fehler
+     * @param sender Der CommandSender für Feedback
      */
-    public boolean uninvitePlayer(String playerName) {
+    public void uninvitePlayer(String playerName, org.bukkit.command.CommandSender sender) {
         try {
-            // UUID von der Mojang-API holen
+            // UUID von der Mojang-API holen (läuft bereits async)
             UUID uuid = getUUIDFromMojang(playerName);
             if (uuid == null) {
                 getLogger().warning("Spieler '" + playerName + "' existiert nicht oder konnte nicht gefunden werden!");
-                return false;
+                getServer().getScheduler().runTask(this, () -> {
+                    sender.sendMessage(createMessage(
+                        "§c✗ Spieler §e" + playerName + "§c wurde nicht gefunden!",
+                        NamedTextColor.RED
+                    ));
+                    sender.sendMessage(createMessage(
+                        "§7Stelle sicher, dass der Name korrekt geschrieben ist.",
+                        NamedTextColor.GRAY
+                    ));
+                });
+                return;
             }
 
-            // OfflinePlayer mit der echten UUID erstellen
-            OfflinePlayer offlinePlayer = Bukkit.getOfflinePlayer(uuid);
-            offlinePlayer.setWhitelisted(false);
+            // OfflinePlayer mit der echten UUID erstellen und Whitelist auf Main-Thread setzen
+            getServer().getScheduler().runTask(this, () -> {
+                // Verwende den nativen whitelist Befehl
+                getServer().dispatchCommand(getServer().getConsoleSender(), "whitelist remove " + playerName);
+                
+                // Konsolennachricht
+                getLogger().info("========================================");
+                getLogger().info("  SPIELER ENTFERNT");
+                getLogger().info("  Spieler: " + playerName);
+                getLogger().info("  UUID: " + uuid);
+                getLogger().info("  Whitelist: ✗ Deaktiviert");
+                getLogger().info("========================================");
+                
+                // Feedback an Sender
+                sender.sendMessage(createMessage(
+                    "§a✓ Spieler §e" + playerName + "§a wurde von der Whitelist entfernt!",
+                    NamedTextColor.GREEN
+                ));
+
+                // Broadcast an alle Admins
+                getServer().getOnlinePlayers().stream()
+                    .filter(p -> p.hasPermission("invite.admin"))
+                    .forEach(p -> {
+                        if (!p.equals(sender)) {
+                            p.sendMessage(createMessage(
+                                "§7[§cUninvite§7] §e" + sender.getName() +
+                                " §7hat §e" + playerName + " §7von der Whitelist entfernt.",
+                                NamedTextColor.GRAY
+                            ));
+                        }
+                    });
+            });
             
-            // Konsolennachricht
-            getLogger().info("========================================");
-            getLogger().info("  SPIELER ENTFERNT");
-            getLogger().info("  Spieler: " + playerName);
-            getLogger().info("  UUID: " + uuid);
-            getLogger().info("  Whitelist: ✗ Deaktiviert");
-            getLogger().info("========================================");
-            
-            return true;
         } catch (Exception e) {
             getLogger().severe("========================================");
             getLogger().severe("  FEHLER beim Entfernen!");
             getLogger().severe("  Spieler: " + playerName);
             getLogger().severe("  Fehler: " + e.getMessage());
             getLogger().severe("========================================");
-            return false;
+            e.printStackTrace();
+            
+            getServer().getScheduler().runTask(this, () -> {
+                sender.sendMessage(createMessage(
+                    "§c✗ Fehler beim Entfernen von §e" + playerName + "§c!",
+                    NamedTextColor.RED
+                ));
+                sender.sendMessage(createMessage(
+                    "§7Bitte überprüfe die Logs für weitere Informationen.",
+                    NamedTextColor.GRAY
+                ));
+            });
         }
     }
 
