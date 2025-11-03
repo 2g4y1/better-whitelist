@@ -10,6 +10,14 @@ import org.bukkit.OfflinePlayer;
 import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.util.UUID;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+
 public class InvitePlugin extends JavaPlugin {
 
     private LuckPerms luckPerms;
@@ -59,14 +67,22 @@ public class InvitePlugin extends JavaPlugin {
 
     /**
      * Fügt einen Spieler zur Whitelist hinzu und weist ihm die default-Gruppe zu
+     * Holt die UUID über die Mojang-API, ähnlich wie /whitelist add
      *
      * @param playerName Name des Spielers
      * @return true bei Erfolg, false bei Fehler
      */
     public boolean invitePlayer(String playerName) {
         try {
-            // Spieler zur Whitelist hinzufügen
-            OfflinePlayer offlinePlayer = Bukkit.getOfflinePlayer(playerName);
+            // UUID von der Mojang-API holen
+            UUID uuid = getUUIDFromMojang(playerName);
+            if (uuid == null) {
+                getLogger().warning("Spieler '" + playerName + "' existiert nicht oder konnte nicht gefunden werden!");
+                return false;
+            }
+
+            // OfflinePlayer mit der echten UUID erstellen
+            OfflinePlayer offlinePlayer = Bukkit.getOfflinePlayer(uuid);
 
             // Whitelist muss auf dem Main-Thread gesetzt werden
             offlinePlayer.setWhitelisted(true);
@@ -75,7 +91,7 @@ public class InvitePlugin extends JavaPlugin {
             getLogger().info("========================================");
             getLogger().info("  SPIELER EINGELADEN");
             getLogger().info("  Spieler: " + playerName);
-            getLogger().info("  UUID: " + offlinePlayer.getUniqueId());
+            getLogger().info("  UUID: " + uuid);
             getLogger().info("  Whitelist: ✓ Aktiviert");
             getLogger().info("  LuckPerms-Gruppe: default");
             getLogger().info("========================================");
@@ -96,21 +112,80 @@ public class InvitePlugin extends JavaPlugin {
     }
 
     /**
+     * Holt die UUID eines Spielers von der Mojang-API
+     * Entspricht dem Verhalten von /whitelist add
+     *
+     * @param playerName Der Spielername
+     * @return UUID des Spielers oder null wenn nicht gefunden
+     */
+    private UUID getUUIDFromMojang(String playerName) {
+        try {
+            URL url = new URL("https://api.mojang.com/users/profiles/minecraft/" + playerName);
+            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+            connection.setRequestMethod("GET");
+            connection.setConnectTimeout(5000);
+            connection.setReadTimeout(5000);
+
+            int responseCode = connection.getResponseCode();
+            if (responseCode == 200) {
+                BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+                StringBuilder response = new StringBuilder();
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    response.append(line);
+                }
+                reader.close();
+
+                // JSON parsen
+                JsonObject json = JsonParser.parseString(response.toString()).getAsJsonObject();
+                String uuidString = json.get("id").getAsString();
+
+                // UUID formatieren (Mojang gibt sie ohne Bindestriche zurück)
+                return UUID.fromString(
+                    uuidString.replaceFirst(
+                        "(\\p{XDigit}{8})(\\p{XDigit}{4})(\\p{XDigit}{4})(\\p{XDigit}{4})(\\p{XDigit}+)",
+                        "$1-$2-$3-$4-$5"
+                    )
+                );
+            } else if (responseCode == 204 || responseCode == 404) {
+                // Spieler existiert nicht
+                return null;
+            } else {
+                getLogger().warning("Mojang-API antwortet mit Status: " + responseCode);
+                return null;
+            }
+        } catch (Exception e) {
+            getLogger().severe("Fehler beim Abrufen der UUID von Mojang: " + e.getMessage());
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    /**
      * Entfernt einen Spieler von der Whitelist
+     * Holt die UUID über die Mojang-API
      *
      * @param playerName Name des Spielers
      * @return true bei Erfolg, false bei Fehler
      */
     public boolean uninvitePlayer(String playerName) {
         try {
-            OfflinePlayer offlinePlayer = Bukkit.getOfflinePlayer(playerName);
+            // UUID von der Mojang-API holen
+            UUID uuid = getUUIDFromMojang(playerName);
+            if (uuid == null) {
+                getLogger().warning("Spieler '" + playerName + "' existiert nicht oder konnte nicht gefunden werden!");
+                return false;
+            }
+
+            // OfflinePlayer mit der echten UUID erstellen
+            OfflinePlayer offlinePlayer = Bukkit.getOfflinePlayer(uuid);
             offlinePlayer.setWhitelisted(false);
             
             // Konsolennachricht
             getLogger().info("========================================");
             getLogger().info("  SPIELER ENTFERNT");
             getLogger().info("  Spieler: " + playerName);
-            getLogger().info("  UUID: " + offlinePlayer.getUniqueId());
+            getLogger().info("  UUID: " + uuid);
             getLogger().info("  Whitelist: ✗ Deaktiviert");
             getLogger().info("========================================");
             

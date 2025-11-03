@@ -6,7 +6,7 @@
 
     <groupId>de.yourserver</groupId>
     <artifactId>invite-plugin</artifactId>
-    <version>1.0.0</version>
+    <version>0.0.1</version>
     <packaging>jar</packaging>
 
     <name>InvitePlugin</name>
@@ -71,6 +71,14 @@
             <groupId>net.luckperms</groupId>
             <artifactId>api</artifactId>
             <version>5.4</version>
+            <scope>provided</scope>
+        </dependency>
+
+        <!-- Gson für JSON-Parsing (von Paper bereitgestellt) -->
+        <dependency>
+            <groupId>com.google.code.gson</groupId>
+            <artifactId>gson</artifactId>
+            <version>2.10.1</version>
             <scope>provided</scope>
         </dependency>
     </dependencies>
