@@ -1,0 +1,45 @@
+# ============================================
+# BetterWhitelist - Konfiguration
+# ============================================
+# 
+# Diese Datei wird beim ersten Start automatisch generiert.
+# Ändere die Werte nach deinen Wünschen und starte den Server neu.
+
+# ============================================
+# Sprache / Language
+# ============================================
+
+# Wähle die Sprache für alle Plugin-Nachrichten
+# Choose the language for all plugin messages
+# 
+# Verfügbare Sprachen / Available languages:
+#   - de (Deutsch)
+#   - en (English)
+language: "de"
+
+# ============================================
+# LuckPerms Integration
+# ============================================
+
+# Sollen Spieler automatisch zu einer LuckPerms-Gruppe hinzugefügt werden?
+# Should players be automatically added to a LuckPerms group?
+# true = Aktiviert / Enabled | false = Deaktiviert / Disabled
+luckperms:
+  enabled: true
+  
+  # Name der Standard-Gruppe, die neue Spieler erhalten sollen
+  # Name of the default group that new players should receive
+  # Diese Gruppe muss in LuckPerms existieren!
+  # This group must exist in LuckPerms!
+  # Beispiele / Examples: default, member, spieler, newbie
+  default-group: "default"
+
+# ============================================
+# Hinweise / Notes
+# ============================================
+# 
+# - Stelle sicher, dass die angegebene Gruppe in LuckPerms existiert
+#   Make sure the specified group exists in LuckPerms
+# - Überprüfe mit / Check with: /lp listgroups
+# - Erstelle Gruppen mit / Create groups with: /lp creategroup <name>
+# 

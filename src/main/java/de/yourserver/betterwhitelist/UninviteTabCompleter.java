@@ -1,4 +1,4 @@
-package de.yourserver.inviteplugin;
+package de.yourserver.betterwhitelist;
 
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
@@ -13,7 +13,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class InviteTabCompleter implements TabCompleter {
+public class UninviteTabCompleter implements TabCompleter {
 
     @Override
     @Nullable
@@ -21,10 +21,10 @@ public class InviteTabCompleter implements TabCompleter {
                                       @NotNull String alias, @NotNull String[] args) {
         
         if (args.length == 1) {
-            // Zeige Online-Spieler als Vorschläge
-            List<String> suggestions = Bukkit.getOnlinePlayers().stream()
-                .map(player -> player.getName())
-                .filter(name -> name.toLowerCase().startsWith(args[0].toLowerCase()))
+            // Zeige gewhitelistete Spieler als Vorschläge
+            List<String> suggestions = Arrays.stream(Bukkit.getWhitelistedPlayers().toArray(new OfflinePlayer[0]))
+                .map(OfflinePlayer::getName)
+                .filter(name -> name != null && name.toLowerCase().startsWith(args[0].toLowerCase()))
                 .collect(Collectors.toList());
             
             return suggestions;

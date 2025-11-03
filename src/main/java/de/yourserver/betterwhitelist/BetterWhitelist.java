@@ -1,4 +1,4 @@
-package de.yourserver.inviteplugin;
+package de.yourserver.betterwhitelist;
 
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
@@ -18,25 +18,36 @@ import java.util.UUID;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
-public class InvitePlugin extends JavaPlugin {
+public class BetterWhitelist extends JavaPlugin {
 
     private LuckPerms luckPerms;
+    private boolean luckPermsEnabled;
+    private String defaultGroup;
+    private Messages messages;
 
     @Override
     public void onEnable() {
-        getLogger().info("========================================");
-        getLogger().info("  InvitePlugin wird geladen...");
-        getLogger().info("========================================");
+        // Config laden oder erstellen
+        saveDefaultConfig();
+        loadConfiguration();
+        
+        getLogger().info(messages.get("loading.header"));
+        getLogger().info(messages.get("loading.starting"));
+        getLogger().info(messages.get("loading.header"));
         
         // LuckPerms API laden
         RegisteredServiceProvider<LuckPerms> provider = Bukkit.getServicesManager().getRegistration(LuckPerms.class);
         if (provider != null) {
             luckPerms = provider.getProvider();
-            getLogger().info("✓ LuckPerms API erfolgreich geladen!");
+            getLogger().info(messages.get("loading.luckperms.found"));
         } else {
-            getLogger().severe("✗ LuckPerms wurde nicht gefunden! Plugin wird deaktiviert.");
-            getServer().getPluginManager().disablePlugin(this);
-            return;
+            if (luckPermsEnabled) {
+                getLogger().warning(messages.get("loading.luckperms.notfound"));
+                getLogger().warning(messages.get("loading.luckperms.disabled"));
+                luckPermsEnabled = false;
+            } else {
+                getLogger().info(messages.get("loading.luckperms.config_disabled"));
+            }
         }
 
         // Commands registrieren
@@ -44,18 +55,59 @@ public class InvitePlugin extends JavaPlugin {
         getCommand("invite").setTabCompleter(new InviteTabCompleter());
         getCommand("uninvite").setExecutor(new UninviteCommand(this));
         getCommand("uninvite").setTabCompleter(new UninviteTabCompleter());
-        getLogger().info("✓ Commands registriert: /invite, /uninvite");
+        getLogger().info(messages.get("loading.commands"));
 
-        getLogger().info("========================================");
-        getLogger().info("  InvitePlugin v1.0.0 erfolgreich aktiviert!");
-        getLogger().info("========================================");
+        getLogger().info(messages.get("loading.header"));
+        getLogger().info(messages.get("loading.success", 
+            "version", getPluginMeta().getVersion()));
+        if (isLuckPermsEnabled()) {
+            getLogger().info(messages.get("loading.success.luckperms",
+                "group", defaultGroup));
+        } else {
+            getLogger().info(messages.get("loading.success.luckperms_disabled"));
+        }
+        getLogger().info(messages.get("loading.footer"));
     }
 
     @Override
     public void onDisable() {
-        getLogger().info("========================================");
-        getLogger().info("  InvitePlugin wurde deaktiviert!");
-        getLogger().info("========================================");
+        getLogger().info(messages.get("unloading.header"));
+        getLogger().info(messages.get("unloading.message"));
+        getLogger().info(messages.get("unloading.footer"));
+    }
+
+    /**
+     * Lädt die Konfigurationswerte
+     */
+    private void loadConfiguration() {
+        String lang = getConfig().getString("language", "de");
+        messages = new Messages(lang);
+        
+        luckPermsEnabled = getConfig().getBoolean("luckperms.enabled", true);
+        defaultGroup = getConfig().getString("luckperms.default-group", "default");
+        
+        getLogger().info(messages.get("loading.config"));
+        getLogger().info(messages.get("loading.config.language") + lang);
+        getLogger().info(messages.get("loading.config.luckperms") + 
+            (luckPermsEnabled ? "✓" : "✗"));
+        if (luckPermsEnabled) {
+            getLogger().info(messages.get("loading.config.group") + defaultGroup);
+        }
+    }
+
+    /**
+     * Lädt die Konfiguration neu
+     */
+    public void reloadConfiguration() {
+        reloadConfig();
+        loadConfiguration();
+    }
+    
+    /**
+     * Gibt die Messages-Instanz zurück
+     */
+    public Messages getMessages() {
+        return messages;
     }
 
     /**
@@ -63,6 +115,20 @@ public class InvitePlugin extends JavaPlugin {
      */
     public LuckPerms getLuckPerms() {
         return luckPerms;
+    }
+
+    /**
+     * Prüft ob LuckPerms-Integration aktiviert ist
+     */
+    public boolean isLuckPermsEnabled() {
+        return luckPermsEnabled && luckPerms != null;
+    }
+
+    /**
+     * Gibt den Namen der Standard-Gruppe zurück
+     */
+    public String getDefaultGroup() {
+        return defaultGroup;
     }
 
     /**
@@ -78,14 +144,14 @@ public class InvitePlugin extends JavaPlugin {
             // UUID von der Mojang-API holen (läuft bereits async)
             UUID uuid = getUUIDFromMojang(playerName);
             if (uuid == null) {
-                getLogger().warning("Spieler '" + playerName + "' existiert nicht oder konnte nicht gefunden werden!");
+                getLogger().warning(messages.get("mojang.player_not_exists", "player", playerName));
                 getServer().getScheduler().runTask(this, () -> {
                     sender.sendMessage(createMessage(
-                        "§c✗ Spieler §e" + playerName + "§c wurde nicht gefunden!",
+                        messages.get("invite.not_found", "player", playerName),
                         NamedTextColor.RED
                     ));
                     sender.sendMessage(createMessage(
-                        "§7Stelle sicher, dass der Name korrekt geschrieben ist.",
+                        messages.get("invite.check_name"),
                         NamedTextColor.GRAY
                     ));
                 });
@@ -102,27 +168,31 @@ public class InvitePlugin extends JavaPlugin {
 
 
                 // Konsolennachricht
-                getLogger().info("========================================");
-                getLogger().info("  SPIELER EINGELADEN");
-                getLogger().info("  Spieler: " + playerName);
-                getLogger().info("  UUID: " + uuid);
-                getLogger().info("  Whitelist: ✓ Aktiviert");
-                getLogger().info("  LuckPerms-Gruppe: default");
-                getLogger().info("========================================");
+                getLogger().info(messages.get("console.invite.header"));
+                getLogger().info(messages.get("console.invite.title"));
+                getLogger().info(messages.get("console.invite.player", "player", playerName));
+                getLogger().info(messages.get("console.invite.uuid", "uuid", uuid));
+                getLogger().info(messages.get("console.invite.whitelist"));
+                if (isLuckPermsEnabled()) {
+                    getLogger().info(messages.get("console.invite.group", "group", defaultGroup));
+                }
+                getLogger().info(messages.get("console.invite.footer"));
 
                 // Feedback an Sender
                 sender.sendMessage(createMessage(
-                    "§a✓ Spieler §e" + playerName + "§a wurde erfolgreich eingeladen!",
+                    messages.get("invite.success", "player", playerName),
                     NamedTextColor.GREEN
                 ));
                 sender.sendMessage(createMessage(
-                    "§7→ Whitelist: §aAktiviert",
+                    messages.get("invite.whitelist"),
                     NamedTextColor.GRAY
                 ));
-                sender.sendMessage(createMessage(
-                    "§7→ LuckPerms-Gruppe: §edefault",
-                    NamedTextColor.GRAY
-                ));
+                if (isLuckPermsEnabled()) {
+                    sender.sendMessage(createMessage(
+                        messages.get("invite.group", "group", defaultGroup),
+                        NamedTextColor.GRAY
+                    ));
+                }
 
                 // Broadcast an alle Online-Spieler mit der Permission
                 getServer().getOnlinePlayers().stream()
@@ -130,32 +200,35 @@ public class InvitePlugin extends JavaPlugin {
                     .forEach(p -> {
                         if (!p.equals(sender)) {
                             p.sendMessage(createMessage(
-                                "§7[§aInvite§7] §e" + sender.getName() +
-                                " §7hat §e" + playerName + " §7eingeladen.",
+                                messages.get("invite.broadcast", 
+                                    "sender", sender.getName(),
+                                    "player", playerName),
                                 NamedTextColor.GRAY
                             ));
                         }
                     });
             });
 
-            // LuckPerms-Gruppe setzen (läuft bereits async)
-            setPlayerGroup(offlinePlayer, "default");
+            // LuckPerms-Gruppe setzen (läuft bereits async), nur wenn aktiviert
+            if (isLuckPermsEnabled()) {
+                setPlayerGroup(offlinePlayer, defaultGroup);
+            }
 
         } catch (Exception e) {
-            getLogger().severe("========================================");
-            getLogger().severe("  FEHLER beim Einladen!");
-            getLogger().severe("  Spieler: " + playerName);
-            getLogger().severe("  Fehler: " + e.getMessage());
-            getLogger().severe("========================================");
+            getLogger().severe(messages.get("console.error.header"));
+            getLogger().severe(messages.get("console.error.invite_title"));
+            getLogger().severe(messages.get("console.error.player", "player", playerName));
+            getLogger().severe(messages.get("console.error.message", "error", e.getMessage()));
+            getLogger().severe(messages.get("console.error.footer"));
             e.printStackTrace();
             
             getServer().getScheduler().runTask(this, () -> {
                 sender.sendMessage(createMessage(
-                    "§c✗ Fehler beim Einladen von §e" + playerName + "§c!",
+                    messages.get("invite.error", "player", playerName),
                     NamedTextColor.RED
                 ));
                 sender.sendMessage(createMessage(
-                    "§7Bitte überprüfe die Logs für weitere Informationen.",
+                    messages.get("invite.check_logs"),
                     NamedTextColor.GRAY
                 ));
             });
@@ -202,11 +275,11 @@ public class InvitePlugin extends JavaPlugin {
                 // Spieler existiert nicht
                 return null;
             } else {
-                getLogger().warning("Mojang-API antwortet mit Status: " + responseCode);
+                getLogger().warning(messages.get("mojang.status", "status", responseCode));
                 return null;
             }
         } catch (Exception e) {
-            getLogger().severe("Fehler beim Abrufen der UUID von Mojang: " + e.getMessage());
+            getLogger().severe(messages.get("mojang.error", "error", e.getMessage()));
             e.printStackTrace();
             return null;
         }
@@ -225,14 +298,14 @@ public class InvitePlugin extends JavaPlugin {
             // UUID von der Mojang-API holen (läuft bereits async)
             UUID uuid = getUUIDFromMojang(playerName);
             if (uuid == null) {
-                getLogger().warning("Spieler '" + playerName + "' existiert nicht oder konnte nicht gefunden werden!");
+                getLogger().warning(messages.get("mojang.player_not_exists", "player", playerName));
                 getServer().getScheduler().runTask(this, () -> {
                     sender.sendMessage(createMessage(
-                        "§c✗ Spieler §e" + playerName + "§c wurde nicht gefunden!",
+                        messages.get("uninvite.not_found", "player", playerName),
                         NamedTextColor.RED
                     ));
                     sender.sendMessage(createMessage(
-                        "§7Stelle sicher, dass der Name korrekt geschrieben ist.",
+                        messages.get("uninvite.check_name"),
                         NamedTextColor.GRAY
                     ));
                 });
@@ -245,16 +318,16 @@ public class InvitePlugin extends JavaPlugin {
                 getServer().dispatchCommand(getServer().getConsoleSender(), "whitelist remove " + playerName);
                 
                 // Konsolennachricht
-                getLogger().info("========================================");
-                getLogger().info("  SPIELER ENTFERNT");
-                getLogger().info("  Spieler: " + playerName);
-                getLogger().info("  UUID: " + uuid);
-                getLogger().info("  Whitelist: ✗ Deaktiviert");
-                getLogger().info("========================================");
+                getLogger().info(messages.get("console.uninvite.header"));
+                getLogger().info(messages.get("console.uninvite.title"));
+                getLogger().info(messages.get("console.uninvite.player", "player", playerName));
+                getLogger().info(messages.get("console.uninvite.uuid", "uuid", uuid));
+                getLogger().info(messages.get("console.uninvite.whitelist"));
+                getLogger().info(messages.get("console.uninvite.footer"));
                 
                 // Feedback an Sender
                 sender.sendMessage(createMessage(
-                    "§a✓ Spieler §e" + playerName + "§a wurde von der Whitelist entfernt!",
+                    messages.get("uninvite.success", "player", playerName),
                     NamedTextColor.GREEN
                 ));
 
@@ -264,8 +337,9 @@ public class InvitePlugin extends JavaPlugin {
                     .forEach(p -> {
                         if (!p.equals(sender)) {
                             p.sendMessage(createMessage(
-                                "§7[§cUninvite§7] §e" + sender.getName() +
-                                " §7hat §e" + playerName + " §7von der Whitelist entfernt.",
+                                messages.get("uninvite.broadcast",
+                                    "sender", sender.getName(),
+                                    "player", playerName),
                                 NamedTextColor.GRAY
                             ));
                         }
@@ -273,20 +347,20 @@ public class InvitePlugin extends JavaPlugin {
             });
             
         } catch (Exception e) {
-            getLogger().severe("========================================");
-            getLogger().severe("  FEHLER beim Entfernen!");
-            getLogger().severe("  Spieler: " + playerName);
-            getLogger().severe("  Fehler: " + e.getMessage());
-            getLogger().severe("========================================");
+            getLogger().severe(messages.get("console.error.header"));
+            getLogger().severe(messages.get("console.error.uninvite_title"));
+            getLogger().severe(messages.get("console.error.player", "player", playerName));
+            getLogger().severe(messages.get("console.error.message", "error", e.getMessage()));
+            getLogger().severe(messages.get("console.error.footer"));
             e.printStackTrace();
             
             getServer().getScheduler().runTask(this, () -> {
                 sender.sendMessage(createMessage(
-                    "§c✗ Fehler beim Entfernen von §e" + playerName + "§c!",
+                    messages.get("uninvite.error", "player", playerName),
                     NamedTextColor.RED
                 ));
                 sender.sendMessage(createMessage(
-                    "§7Bitte überprüfe die Logs für weitere Informationen.",
+                    messages.get("uninvite.check_logs"),
                     NamedTextColor.GRAY
                 ));
             });
@@ -295,15 +369,20 @@ public class InvitePlugin extends JavaPlugin {
 
     /**
      * Setzt die Hauptgruppe eines Spielers in LuckPerms
-     * Entspricht: /lp user <Username> parent set default
+     * Entspricht: /lp user <Username> parent set <groupName>
      *
      * @param player Der Spieler
      * @param groupName Name der Gruppe
      */
     private void setPlayerGroup(OfflinePlayer player, String groupName) {
+        if (!isLuckPermsEnabled()) {
+            return;
+        }
+
         // Prüfen ob die Gruppe existiert
         if (luckPerms.getGroupManager().getGroup(groupName) == null) {
-            getLogger().warning("Gruppe '" + groupName + "' existiert nicht in LuckPerms!");
+            getLogger().warning(messages.get("luckperms.group_not_found", "group", groupName));
+            getLogger().warning(messages.get("luckperms.check_config", "group", groupName));
             return;
         }
 
@@ -320,11 +399,15 @@ public class InvitePlugin extends JavaPlugin {
 
                 // Änderungen speichern (gibt automatisch einen CompletableFuture zurück)
                 luckPerms.getUserManager().saveUser(user).thenRunAsync(() -> {
-                    getLogger().info("Spieler " + player.getName() + " wurde zur Gruppe '" + groupName + "' hinzugefügt.");
+                    getLogger().info(messages.get("luckperms.group_set", 
+                        "player", player.getName(), 
+                        "group", groupName));
                 });
             }
         }).exceptionally(throwable -> {
-            getLogger().severe("Fehler beim Setzen der Gruppe für " + player.getName() + ": " + throwable.getMessage());
+            getLogger().severe(messages.get("luckperms.error", 
+                "player", player.getName(),
+                "error", throwable.getMessage()));
             throwable.printStackTrace();
             return null;
         });

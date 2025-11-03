@@ -1,11 +1,11 @@
-name: InvitePlugin
+name: BetterWhitelist
 version: '${project.version}'
-main: de.yourserver.inviteplugin.InvitePlugin
+main: de.yourserver.betterwhitelist.BetterWhitelist
 api-version: '1.21'
-depend: [LuckPerms]
+softdepend: [LuckPerms]
 author: YourName
-description: Whitelist-Plugin mit automatischer LuckPerms-Gruppenzuweisung
-website: https://github.com/yourname/inviteplugin
+description: Konfigurierbares Whitelist-Plugin mit optionaler LuckPerms-Integration
+website: https://github.com/yourname/better-whitelist
 
 commands:
   invite:

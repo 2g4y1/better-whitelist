@@ -1,4 +1,4 @@
-package de.yourserver.inviteplugin;
+package de.yourserver.betterwhitelist;
 
 import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.command.Command;
@@ -8,9 +8,9 @@ import org.jetbrains.annotations.NotNull;
 
 public class InviteCommand implements CommandExecutor {
 
-    private final InvitePlugin plugin;
+    private final BetterWhitelist plugin;
 
-    public InviteCommand(InvitePlugin plugin) {
+    public InviteCommand(BetterWhitelist plugin) {
         this.plugin = plugin;
     }
 
@@ -21,7 +21,7 @@ public class InviteCommand implements CommandExecutor {
         // Argument-Check
         if (args.length != 1) {
             sender.sendMessage(plugin.createMessage(
-                "§eVerwendung: /invite <Spielername>",
+                plugin.getMessages().get("invite.usage"),
                 NamedTextColor.YELLOW
             ));
             return true;
@@ -31,7 +31,7 @@ public class InviteCommand implements CommandExecutor {
 
         // Nachricht, dass es lädt
         sender.sendMessage(plugin.createMessage(
-            "§7Lade Spielerdaten von Mojang...",
+            plugin.getMessages().get("invite.loading"),
             NamedTextColor.GRAY
         ));
 

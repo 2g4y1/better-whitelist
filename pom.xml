@@ -5,12 +5,12 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>de.yourserver</groupId>
-    <artifactId>invite-plugin</artifactId>
+    <artifactId>better-whitelist</artifactId>
     <version>0.0.2</version>
     <packaging>jar</packaging>
 
-    <name>InvitePlugin</name>
-    <description>Ein Plugin zum Whitelisten von Spielern mit automatischer LuckPerms-Gruppenzuweisung</description>
+    <name>BetterWhitelist</name>
+    <description>Ein konfigurierbares Plugin zum Whitelisten von Spielern mit optionaler LuckPerms-Gruppenzuweisung</description>
 
     <properties>
         <java.version>21</java.version>
