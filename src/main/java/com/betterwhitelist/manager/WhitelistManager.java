@@ -12,6 +12,7 @@ import java.io.File;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 public class WhitelistManager {
@@ -20,10 +21,11 @@ public class WhitelistManager {
     private final Map<UUID, WhitelistEntry> whitelistEntries;
     private final File dataFile;
     private FileConfiguration dataConfig;
+    private final Object saveLock = new Object();
     
     public WhitelistManager(BetterWhitelistPlugin plugin) {
         this.plugin = plugin;
-        this.whitelistEntries = new HashMap<>();
+        this.whitelistEntries = new ConcurrentHashMap<>();
         this.dataFile = new File(plugin.getDataFolder(), "whitelist.yml");
         
         loadData();
@@ -76,27 +78,29 @@ public class WhitelistManager {
     }
     
     public void save() {
-        dataConfig.set("entries", null); // Clear existing entries
-        
-        for (Map.Entry<UUID, WhitelistEntry> entry : whitelistEntries.entrySet()) {
-            String path = "entries." + entry.getKey().toString();
-            WhitelistEntry wlEntry = entry.getValue();
+        synchronized (saveLock) {
+            dataConfig.set("entries", null); // Clear existing entries
             
-            dataConfig.set(path + ".name", wlEntry.getPlayerName());
-            dataConfig.set(path + ".addedBy", wlEntry.getAddedBy());
-            dataConfig.set(path + ".addedDate", wlEntry.getAddedDate().getTime());
-            dataConfig.set(path + ".reason", wlEntry.getReason());
-            
-            if (wlEntry.getExpirationDate() != null) {
-                dataConfig.set(path + ".expirationDate", wlEntry.getExpirationDate().getTime());
+            for (Map.Entry<UUID, WhitelistEntry> entry : whitelistEntries.entrySet()) {
+                String path = "entries." + entry.getKey().toString();
+                WhitelistEntry wlEntry = entry.getValue();
+                
+                dataConfig.set(path + ".name", wlEntry.getPlayerName());
+                dataConfig.set(path + ".addedBy", wlEntry.getAddedBy());
+                dataConfig.set(path + ".addedDate", wlEntry.getAddedDate().getTime());
+                dataConfig.set(path + ".reason", wlEntry.getReason());
+                
+                if (wlEntry.getExpirationDate() != null) {
+                    dataConfig.set(path + ".expirationDate", wlEntry.getExpirationDate().getTime());
+                }
             }
-        }
-        
-        try {
-            dataConfig.save(dataFile);
-        } catch (IOException e) {
-            plugin.getLogger().severe("Could not save whitelist data!");
-            e.printStackTrace();
+            
+            try {
+                dataConfig.save(dataFile);
+            } catch (IOException e) {
+                plugin.getLogger().severe("Could not save whitelist data!");
+                e.printStackTrace();
+            }
         }
     }
     
@@ -141,6 +145,7 @@ public class WhitelistManager {
         
         // Check if temporary whitelist has expired
         if (entry.isExpired()) {
+            // Remove in sync context to avoid race conditions
             removePlayer(playerId);
             return false;
         }
@@ -164,8 +169,11 @@ public class WhitelistManager {
         
         for (UUID playerId : expiredPlayers) {
             WhitelistEntry entry = whitelistEntries.get(playerId);
-            plugin.getLogger().info("Temporary whitelist expired for player: " + entry.getPlayerName());
-            removePlayer(playerId);
+            // Null check in case entry was removed by another thread
+            if (entry != null) {
+                plugin.getLogger().info("Temporary whitelist expired for player: " + entry.getPlayerName());
+                removePlayer(playerId);
+            }
         }
     }
     
