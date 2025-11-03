@@ -70,6 +70,6 @@ jobs:
           
           Diese Version wurde automatisch erstellt und als Pre-Release markiert.
         files: |
-          target/invite-plugin-*.jar
+          target/better-whitelist-*.jar
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
