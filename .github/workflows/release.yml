@@ -2,8 +2,6 @@ name: Release
 
 on:
   push:
-    branches: [main]
-    paths: ['src/**', 'pom.xml']
     tags: ['v*.*.*']
   workflow_dispatch:
     inputs:

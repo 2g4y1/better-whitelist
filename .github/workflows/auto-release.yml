@@ -1,0 +1,120 @@
+name: Auto-Release
+
+on:
+  workflow_run:
+    workflows: ["CI"]
+    types: [completed]
+    branches: [main]
+
+concurrency:
+  group: auto-release-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  auto-release:
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    permissions:
+      contents: write
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: Check if version tag exists
+        id: version_tag
+        run: |
+          # Prüfe ob ein v*.*.* Tag auf dem aktuellen Commit existiert
+          if git describe --exact-match --tags HEAD 2>/dev/null | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$'; then
+            echo "HAS_VERSION_TAG=true" >> $GITHUB_OUTPUT
+          else
+            echo "HAS_VERSION_TAG=false" >> $GITHUB_OUTPUT
+          fi
+      
+      - name: Skip if version tag exists
+        if: steps.version_tag.outputs.HAS_VERSION_TAG == 'true'
+        run: |
+          echo "⏭️ Version-Tag gefunden - überspringe Auto-Release"
+          exit 0
+      
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: maven
+    
+      - name: Cache Maven packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-
+        
+      - name: Build with Maven
+        run: mvn clean package --batch-mode
+      
+      - name: Get current date
+        id: date
+        run: echo "DATE=$(date +'%Y.%m.%d')" >> $GITHUB_OUTPUT
+      
+      - name: Get commit info
+        id: commit
+        run: |
+          echo "COUNT=$(git rev-list --count HEAD)" >> $GITHUB_OUTPUT
+          echo "SHORT_SHA=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+      
+      - name: Generate version tag
+        id: version
+        run: |
+          VERSION="v1.0.0-build.${{ steps.commit.outputs.COUNT }}"
+          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+      
+      - name: Rename JAR with commit ID
+        run: |
+          mv target/better-whitelist-*.jar target/better-whitelist-${{ steps.version.outputs.VERSION }}-${{ steps.commit.outputs.SHORT_SHA }}.jar
+        
+      - name: Check if build tag exists
+        id: tag_exists
+        run: |
+          if git rev-parse "${{ steps.version.outputs.VERSION }}" >/dev/null 2>&1; then
+            echo "EXISTS=true" >> $GITHUB_OUTPUT
+          else
+            echo "EXISTS=false" >> $GITHUB_OUTPUT
+          fi
+        
+      - name: Generate SHA256
+        if: steps.tag_exists.outputs.EXISTS == 'false'
+        run: |
+          cd target
+          sha256sum better-whitelist-*.jar > better-whitelist-${{ steps.version.outputs.VERSION }}-${{ steps.commit.outputs.SHORT_SHA }}.jar.sha256
+          CHECKSUM=$(cat better-whitelist-*.jar.sha256 | cut -d' ' -f1)
+          echo "CHECKSUM=$CHECKSUM" >> $GITHUB_ENV
+      
+      - name: Create Release
+        if: steps.tag_exists.outputs.EXISTS == 'false'
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ steps.version.outputs.VERSION }}
+          name: Auto Release ${{ steps.version.outputs.VERSION }}
+          draft: false
+          prerelease: true
+          generate_release_notes: true
+          body: |
+            🤖 Automatisches Pre-Release
+            
+            **Build-Datum:** ${{ steps.date.outputs.DATE }}
+            **Commit:** ${{ github.event.head_commit.message }}
+            **Commit-ID:** ${{ steps.commit.outputs.SHORT_SHA }}
+            
+            **SHA256:** `${{ env.CHECKSUM }}`
+            
+            Diese Version wurde automatisch nach erfolgreichem CI-Durchlauf erstellt.
+          files: |
+            target/better-whitelist-${{ steps.version.outputs.VERSION }}-${{ steps.commit.outputs.SHORT_SHA }}.jar
+            target/better-whitelist-${{ steps.version.outputs.VERSION }}-${{ steps.commit.outputs.SHORT_SHA }}.jar.sha256
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
