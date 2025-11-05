@@ -27,6 +27,7 @@ public class BetterWhitelist extends JavaPlugin {
     private Messages messages;
     private InviteData inviteData;
     private int maxInvites;
+    private MutualBoostManager boostManager;
 
     @Override
     public void onEnable() {
@@ -36,6 +37,9 @@ public class BetterWhitelist extends JavaPlugin {
         
         // Invite-Datenbank laden
         inviteData = new InviteData(getDataFolder());
+        
+        // Mutual Boost Manager initialisieren
+        boostManager = new MutualBoostManager(this, inviteData);
         
         getLogger().info(messages.get("loading.header"));
         getLogger().info(messages.get("loading.starting"));
@@ -79,6 +83,11 @@ public class BetterWhitelist extends JavaPlugin {
 
     @Override
     public void onDisable() {
+        // Boost-Manager stoppen
+        if (boostManager != null) {
+            boostManager.stop();
+        }
+        
         getLogger().info(messages.get("unloading.header"));
         getLogger().info(messages.get("unloading.message"));
         getLogger().info(messages.get("unloading.footer"));
@@ -112,6 +121,12 @@ public class BetterWhitelist extends JavaPlugin {
         reloadConfig();
         loadConfiguration();
         inviteData.load();
+        
+        // Boost-Manager neu laden
+        if (boostManager != null) {
+            boostManager.stop();
+        }
+        boostManager = new MutualBoostManager(this, inviteData);
     }
     
     /**

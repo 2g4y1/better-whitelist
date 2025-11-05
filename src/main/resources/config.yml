@@ -47,6 +47,79 @@ luckperms:
   default-group: "default"
 
 # ============================================
+# Mutual Invite Boost System
+# ============================================
+
+# XP-Boost für Spieler die sich gegenseitig eingeladen haben
+# XP boost for players who invited each other
+#
+# Wenn zwei Spieler sich gegenseitig auf die Whitelist eingeladen haben
+# und innerhalb des Radius sind, erhalten beide einen XP-Boost
+# If two players invited each other to the whitelist and are within
+# the radius, both receive an XP boost
+mutual-invite-boost:
+  # System aktivieren / Enable system
+  enabled: true
+  
+  # Radius in Blöcken / Radius in blocks
+  # Wie nah müssen die Spieler beieinander sein?
+  # How close do players need to be to each other?
+  radius: 50
+  
+  # XP-Multiplikator / XP multiplier
+  # 1.0 = Normal, 1.5 = +50%, 2.0 = +100%
+  xp-multiplier: 1.5
+  
+  # Check-Intervall in Sekunden / Check interval in seconds
+  # Wie oft soll geprüft werden? (Empfohlen: 5-10)
+  # How often should it check? (Recommended: 5-10)
+  check-interval: 5
+  
+  # Actionbar-Nachricht anzeigen / Show actionbar message
+  # Zeigt eine Nachricht über dem Hotbar an
+  # Shows a message above the hotbar
+  show-actionbar: true
+  
+  # Partikel-Effekte / Particle effects
+  # Zeigt Partikel zwischen den Spielern
+  # Shows particles between players
+  particle-effects: true
+  
+  # ===== SICHERHEITS-EINSTELLUNGEN / SECURITY SETTINGS =====
+  
+  # Maximale Anzahl Boost-Partner gleichzeitig
+  # Maximum number of boost partners at once
+  # Verhindert dass zu viele Spieler gleichzeitig boosten
+  # Prevents too many players boosting at once
+  # Standard: 3 (erlaubt max 3 andere Spieler für Boost)
+  max-boost-partners: 3
+  
+  # Maximaler Multiplikator / Maximum multiplier
+  # Hard Cap für den XP-Boost
+  # Hard cap for XP boost
+  # Verhindert dass der Boost zu hoch wird
+  # Prevents boost from getting too high
+  # Standard: 2.5 (max +150% XP)
+  max-multiplier: 2.5
+  
+  # Minimum XP für Boost-Aktivierung
+  # Minimum XP for boost activation
+  # XP-Events unter diesem Wert werden nicht geboostet
+  # XP events below this value won't be boosted
+  # Verhindert Spam von vielen kleinen XP-Events
+  # Prevents spam from many small XP events
+  # Standard: 1
+  min-xp-for-boost: 1
+  
+  # Maximale XP pro Event / Maximum XP per event
+  # Hard Cap pro einzelnem XP-Event
+  # Hard cap per single XP event
+  # Verhindert Exploit durch extreme XP-Quellen
+  # Prevents exploit through extreme XP sources
+  # Standard: 1000 (selbst mit Boost nicht mehr als 1000 XP pro Event)
+  max-xp-per-event: 1000
+
+# ============================================
 # Hinweise / Notes
 # ============================================
 # 

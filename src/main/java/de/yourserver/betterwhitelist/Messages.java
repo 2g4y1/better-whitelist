@@ -291,8 +291,13 @@ public class Messages {
             "§7Gesamt: §e{total}§7 Invites",
             "§7Total: §e{total}§7 invites");
         addMessage("list.all.top",
-            "§7Top Inviter:",
-            "§7Top Inviters:");
+            "Top Inviter:",
+            "Top Inviters:");
+        
+        // MUTUAL BOOST MESSAGES
+        addMessage("boost.active",
+            "⚡ Team-Boost mit {players} (+{multiplier})",
+            "⚡ Team Boost with {players} (+{multiplier})");
     }
     
     /**
