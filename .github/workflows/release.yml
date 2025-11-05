@@ -91,7 +91,9 @@ jobs:
     - name: Check if tag exists
       id: exists
       run: |
-        if git rev-parse "${{ steps.ver.outputs.VERSION }}" >/dev/null 2>&1; then
+        if [[ "${{ steps.type.outputs.TYPE }}" == "tag" ]]; then
+          echo "EXISTS=false" >> $GITHUB_OUTPUT
+        elif git rev-parse "${{ steps.ver.outputs.VERSION }}" >/dev/null 2>&1; then
           echo "EXISTS=true" >> $GITHUB_OUTPUT
         else
           echo "EXISTS=false" >> $GITHUB_OUTPUT
