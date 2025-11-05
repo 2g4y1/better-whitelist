@@ -2,95 +2,99 @@
 
 <div align="center">
 
-**Let players invite friends to your whitelisted Minecraft server**
+**Finally, your players can invite friends themselves!**
 
 [![Minecraft](https://img.shields.io/badge/Minecraft-1.21.x-green.svg)](https://papermc.io/)
 [![Java](https://img.shields.io/badge/Java-21-orange.svg)](https://openjdk.org/)
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-[🇩🇪 Deutsche Version](README.md)
+[Features](#-features) • [Quick Start](#-quick-start) • [Commands](#-commands) • [Configuration](#%EF%B8%8F-configuration) • [Download](#-download)
 
 </div>
 
 ---
 
-## 📖 About
+## 📖 The Problem
 
-**BetterWhitelist** allows trusted players to invite friends without admin intervention.
+On most whitelisted servers, players always have to contact an admin when they want to invite a friend. That's annoying and time-consuming.
 
-### ✨ Features
+## 💡 The Solution
 
-- 🤝 Players can invite friends independently
-- 🚫 Players are automatically kicked when removed from whitelist
-- 🔒 Permission-based security
-- 🌍 German and English support
-- ⚡ Async processing (no lag)
-- 🎯 Optional LuckPerms group assignment
+BetterWhitelist gives trusted players the ability to independently add friends to the whitelist – with a single command!
 
 ---
 
-## 📥 Installation
+## ✨ Features
 
-### Prerequisites
-
-- Paper/Purpur/Paper fork (1.21.x)
-- Java 21+
-- Optional: LuckPerms
-
-### Setup
-
-1. Download `BetterWhitelist-x.x.x.jar` from [Releases](https://github.com/2g4y1/better-whitelist/releases)
-2. Copy to `plugins/` folder
-3. Restart server
-4. Configure `plugins/BetterWhitelist/config.yml`
-5. Set permissions:
-
-```bash
-/lp group trusted permission set invite.use true
-/lp group admin permission set invite.admin true
-```
+- 🎫 **Simple Whitelist Management** - `/invite <player>` is all you need
+- 🚫 **Auto-Kick on Removal** - Players are kicked when uninvited
+- 📊 **Invite Tracking & Limits** - Track who invited whom, configurable max invites (default: 5)
+- 📋 **Statistics & Management** - View invites, remaining slots, admin tools
+- 🔄 **Hot Reload** - Update config without restart
+- 🔐 **Permission System** - Secure role-based access control
+- 👥 **LuckPerms Integration** - Optional automatic group assignment
+- 🌍 **Multilingual** - German and English support
+- ⚡ **High Performance** - Async operations, persistent JSON storage
 
 ---
 
-## ⚙️ Configuration
+## 🚀 Quick Start
 
-Config file: `plugins/BetterWhitelist/config.yml` (auto-created)
-
-```yaml
-language: "en"  # de or en
-
-luckperms:
-  enabled: false              # Auto-assign groups?
-  default-group: "default"    # Group name for new players
-```
-
-**Note**: If `luckperms.enabled: true`, the group must exist in LuckPerms!
+1. Download from [Releases](https://github.com/2g4y1/better-whitelist/releases)
+2. Copy plugin to `plugins/` folder
+3. Start server (config is created automatically)
+4. Grant permissions: `/lp group trusted permission set invite.use true`
+5. Done! Players can now use `/invite <name>`
 
 ---
 
-## 🎮 Commands
+## 📋 Commands
 
 | Command | Permission | Description |
-|---------|-----------|-------------|
-| `/invite <player>` | `invite.use` | Add player to whitelist |
-| `/uninvite <player>` | `invite.admin` | Remove player from whitelist (kicks if online) |
+|---------|------------|-------------|
+| `/invite <player>` | `invite.use` | Invites a player to the whitelist |
+| `/uninvite <player>` | `invite.admin` | Removes a player (kicks if online) |
+| `/invitelist [player]` | `invite.use` | Shows your invites and remaining slots |
+| `/invitelist <player>` | `invite.admin` | View another player's invites |
+| `/betterwhitelist reload` | `invite.admin` | Reloads config and invite data |
 
-**Tab Completion**: Both commands support tab completion for player names.
+**Aliases:** `/invitelist` → `/ilist`, `/invites` • `/betterwhitelist` → `/bwl`, `/bwhitelist`
 
 ---
 
 ## 🔐 Permissions
 
-| Permission | Description |
-|-----------|-------------|
-| `invite.use` | Invite players |
-| `invite.admin` | Remove players |
+| Permission | Description | Default |
+|-----------|-------------|---------|
+| `invite.use` | Invite and view own invites | OP |
+| `invite.admin` | Unlimited invites, manage all players | OP |
 
 ---
 
-## 📦 Download
+## ⚙️ Configuration
 
-**Latest Version**: [GitHub Releases](https://github.com/2g4y1/better-whitelist/releases)
+```yaml
+language: "en"         # "en" or "de"
+max-invites: 5         # Max invites per player (admins unlimited)
+
+luckperms:
+  enabled: false
+  default-group: "default"
+```
+
+---
+
+## 📊 Invite System
+
+Players can invite up to 5 friends (configurable). Use `/invitelist` to see your invites and remaining slots. When you uninvite someone, the slot becomes available again. All invites are tracked with timestamps in `invites.json`.
+
+**Admin Features:** View any player's invites, unlimited invites, see top inviters from console.
+
+---
+
+## 📥 Download
+
+[**GitHub Releases**](https://github.com/2g4y1/better-whitelist/releases)
 
 ---
 
@@ -98,12 +102,6 @@ luckperms:
 
 ```bash
 mvn clean package
-```
-
-Or with Docker:
-
-```bash
-docker run --rm -v "$(pwd)":/app -w /app maven:3.9-eclipse-temurin-21 mvn clean package
 ```
 
 ---
