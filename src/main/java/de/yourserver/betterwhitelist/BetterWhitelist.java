@@ -18,6 +18,7 @@ import java.util.UUID;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
+// Test: CI-Check funktioniert
 public class BetterWhitelist extends JavaPlugin {
 
     private LuckPerms luckPerms;
