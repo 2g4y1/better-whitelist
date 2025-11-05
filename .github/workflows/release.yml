@@ -43,6 +43,12 @@ jobs:
         else
           echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
         fi
+    
+    - name: Get previous tag
+      id: prev_tag
+      run: |
+        PREV_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
+        echo "PREV_TAG=$PREV_TAG" >> $GITHUB_OUTPUT
       
     - name: Rename JAR with commit ID
       run: |
@@ -57,7 +63,14 @@ jobs:
         prerelease: false
         generate_release_notes: true
         body: |
+          ## 📦 Installation
+          Lade die `better-whitelist-${{ steps.version.outputs.VERSION }}-${{ steps.commit.outputs.SHORT_SHA }}.jar` herunter und kopiere sie in deinen `plugins` Ordner.
+          
+          ---
+          
           **Commit-ID:** ${{ steps.commit.outputs.SHORT_SHA }}
+          
+          ${{ steps.prev_tag.outputs.PREV_TAG && format('**Vergleich:** [{0}...{1}](https://github.com/{2}/compare/{0}...{1})', steps.prev_tag.outputs.PREV_TAG, steps.version.outputs.VERSION, github.repository) || '' }}
         files: |
           target/better-whitelist-${{ steps.version.outputs.VERSION }}-${{ steps.commit.outputs.SHORT_SHA }}.jar
       env:
