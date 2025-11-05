@@ -18,6 +18,18 @@
 language: "de"
 
 # ============================================
+# Invite-Limit
+# ============================================
+
+# Maximale Anzahl an Invites pro Spieler
+# Maximum number of invites per player
+# 
+# Standard: 5
+# Hinweis: Console und Admins haben kein Limit
+# Note: Console and admins have no limit
+max-invites: 5
+
+# ============================================
 # LuckPerms Integration
 # ============================================
 

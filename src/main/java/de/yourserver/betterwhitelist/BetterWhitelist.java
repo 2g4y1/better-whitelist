@@ -14,6 +14,7 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.Optional;
 import java.util.UUID;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
@@ -24,12 +25,17 @@ public class BetterWhitelist extends JavaPlugin {
     private boolean luckPermsEnabled;
     private String defaultGroup;
     private Messages messages;
+    private InviteData inviteData;
+    private int maxInvites;
 
     @Override
     public void onEnable() {
         // Config laden oder erstellen
         saveDefaultConfig();
         loadConfiguration();
+        
+        // Invite-Datenbank laden
+        inviteData = new InviteData(getDataFolder());
         
         getLogger().info(messages.get("loading.header"));
         getLogger().info(messages.get("loading.starting"));
@@ -55,6 +61,8 @@ public class BetterWhitelist extends JavaPlugin {
         getCommand("invite").setTabCompleter(new InviteTabCompleter());
         getCommand("uninvite").setExecutor(new UninviteCommand(this));
         getCommand("uninvite").setTabCompleter(new UninviteTabCompleter());
+        getCommand("invitelist").setExecutor(new ListCommand(this));
+        getCommand("betterwhitelist").setExecutor(new ReloadCommand(this));
         getLogger().info(messages.get("loading.commands"));
 
         getLogger().info(messages.get("loading.header"));
@@ -85,6 +93,7 @@ public class BetterWhitelist extends JavaPlugin {
         
         luckPermsEnabled = getConfig().getBoolean("luckperms.enabled", true);
         defaultGroup = getConfig().getString("luckperms.default-group", "default");
+        maxInvites = getConfig().getInt("max-invites", 5);
         
         getLogger().info(messages.get("loading.config"));
         getLogger().info(messages.get("loading.config.language") + lang);
@@ -93,6 +102,7 @@ public class BetterWhitelist extends JavaPlugin {
         if (luckPermsEnabled) {
             getLogger().info(messages.get("loading.config.group") + defaultGroup);
         }
+        getLogger().info(messages.get("loading.config.max_invites") + maxInvites);
     }
 
     /**
@@ -101,6 +111,7 @@ public class BetterWhitelist extends JavaPlugin {
     public void reloadConfiguration() {
         reloadConfig();
         loadConfiguration();
+        inviteData.load();
     }
     
     /**
@@ -108,6 +119,20 @@ public class BetterWhitelist extends JavaPlugin {
      */
     public Messages getMessages() {
         return messages;
+    }
+
+    /**
+     * Gibt die InviteData-Instanz zurück
+     */
+    public InviteData getInviteData() {
+        return inviteData;
+    }
+
+    /**
+     * Gibt das maximale Invite-Limit zurück
+     */
+    public int getMaxInvites() {
+        return maxInvites;
     }
 
     /**
@@ -141,6 +166,24 @@ public class BetterWhitelist extends JavaPlugin {
      */
     public void invitePlayer(String playerName, org.bukkit.command.CommandSender sender) {
         try {
+            // Check invite limit (nur für Spieler, nicht für Console/Admins)
+            if (sender instanceof org.bukkit.entity.Player) {
+                org.bukkit.entity.Player player = (org.bukkit.entity.Player) sender;
+                int currentInvites = inviteData.getInviteCount(player.getUniqueId());
+                
+                if (currentInvites >= maxInvites) {
+                    getServer().getScheduler().runTask(this, () -> {
+                        sender.sendMessage(createMessage(
+                            messages.get("invite.limit_reached", 
+                                "limit", maxInvites,
+                                "count", currentInvites),
+                            NamedTextColor.RED
+                        ));
+                    });
+                    return;
+                }
+            }
+            
             // UUID von der Mojang-API holen (läuft bereits async)
             UUID uuid = getUUIDFromMojang(playerName);
             if (uuid == null) {
@@ -166,6 +209,11 @@ public class BetterWhitelist extends JavaPlugin {
                 // Verwende den nativen whitelist Befehl, um sicherzustellen, dass der Name gespeichert wird
                 getServer().dispatchCommand(getServer().getConsoleSender(), "whitelist add " + playerName);
 
+                // Invite-Daten speichern (nur wenn Spieler, nicht Console)
+                if (sender instanceof org.bukkit.entity.Player) {
+                    org.bukkit.entity.Player player = (org.bukkit.entity.Player) sender;
+                    inviteData.addInvite(player.getUniqueId(), player.getName(), uuid, playerName);
+                }
 
                 // Konsolennachricht
                 getLogger().info(messages.get("console.invite.header"));
@@ -191,6 +239,16 @@ public class BetterWhitelist extends JavaPlugin {
                     sender.sendMessage(createMessage(
                         messages.get("invite.group", "group", defaultGroup),
                         NamedTextColor.GRAY
+                    ));
+                }
+                
+                // Zeige verbleibende Invites (nur für Spieler)
+                if (sender instanceof org.bukkit.entity.Player) {
+                    org.bukkit.entity.Player player = (org.bukkit.entity.Player) sender;
+                    int remaining = maxInvites - inviteData.getInviteCount(player.getUniqueId());
+                    sender.sendMessage(createMessage(
+                        messages.get("invite.remaining", "remaining", remaining),
+                        remaining > 0 ? NamedTextColor.YELLOW : NamedTextColor.RED
                     ));
                 }
 
@@ -314,6 +372,9 @@ public class BetterWhitelist extends JavaPlugin {
 
             // OfflinePlayer mit der echten UUID erstellen und Whitelist auf Main-Thread setzen
             getServer().getScheduler().runTask(this, () -> {
+                // Invite-Daten entfernen
+                inviteData.removeInvite(uuid);
+                
                 // Verwende den nativen whitelist Befehl
                 getServer().dispatchCommand(getServer().getConsoleSender(), "whitelist remove " + playerName);
                 
@@ -327,11 +388,17 @@ public class BetterWhitelist extends JavaPlugin {
                     getLogger().info(messages.get("console.uninvite.kicked", "player", playerName));
                 }
                 
+                // Zeige wer den Spieler eingeladen hatte
+                Optional<String> inviter = inviteData.getInviter(uuid);
+                
                 // Konsolennachricht
                 getLogger().info(messages.get("console.uninvite.header"));
                 getLogger().info(messages.get("console.uninvite.title"));
                 getLogger().info(messages.get("console.uninvite.player", "player", playerName));
                 getLogger().info(messages.get("console.uninvite.uuid", "uuid", uuid));
+                if (inviter.isPresent()) {
+                    getLogger().info(messages.get("console.uninvite.inviter", "inviter", inviter.get()));
+                }
                 getLogger().info(messages.get("console.uninvite.whitelist"));
                 getLogger().info(messages.get("console.uninvite.footer"));
                 
@@ -340,6 +407,13 @@ public class BetterWhitelist extends JavaPlugin {
                     messages.get("uninvite.success", "player", playerName),
                     NamedTextColor.GREEN
                 ));
+                
+                if (inviter.isPresent()) {
+                    sender.sendMessage(createMessage(
+                        messages.get("uninvite.inviter_info", "inviter", inviter.get()),
+                        NamedTextColor.GRAY
+                    ));
+                }
 
                 // Broadcast an alle Admins
                 getServer().getOnlinePlayers().stream()

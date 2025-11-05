@@ -42,6 +42,9 @@ public class Messages {
         addMessage("loading.config.language",
             "  - Sprache: ",
             "  - Language: ");
+        addMessage("loading.config.max_invites",
+            "  - Max. Invites pro Spieler: ",
+            "  - Max. Invites per Player: ");
         addMessage("loading.luckperms.found",
             "✓ LuckPerms API erfolgreich geladen!",
             "✓ LuckPerms API loaded successfully!");
@@ -117,6 +120,12 @@ public class Messages {
         addMessage("invite.broadcast",
             "§7[§aInvite§7] §e{sender} §7hat §e{player} §7eingeladen.",
             "§7[§aInvite§7] §e{sender} §7invited §e{player}§7.");
+        addMessage("invite.remaining",
+            "§7→ Verbleibende Invites: §e{remaining}",
+            "§7→ Remaining Invites: §e{remaining}");
+        addMessage("invite.limit_reached",
+            "§c✗ Du hast dein Invite-Limit erreicht! (§e{count}§c/§e{limit}§c)",
+            "§c✗ You have reached your invite limit! (§e{count}§c/§e{limit}§c)");
         
         // UNINVITE COMMAND
         addMessage("uninvite.usage",
@@ -146,6 +155,9 @@ public class Messages {
         addMessage("uninvite.kick_message",
             "Du wurdest von der Whitelist entfernt!",
             "You have been removed from the whitelist!");
+        addMessage("uninvite.inviter_info",
+            "§7→ Eingeladen von: §e{inviter}",
+            "§7→ Invited by: §e{inviter}");
         
         // CONSOLE MESSAGES
         addMessage("console.invite.header",
@@ -188,6 +200,9 @@ public class Messages {
         addMessage("console.uninvite.kicked",
             "  Spieler {player} wurde gekickt: ✓",
             "  Player {player} was kicked: ✓");
+        addMessage("console.uninvite.inviter",
+            "  Eingeladen von: {inviter}",
+            "  Invited by: {inviter}");
         addMessage("console.uninvite.footer",
             "========================================",
             "========================================");
@@ -235,6 +250,49 @@ public class Messages {
         addMessage("mojang.status",
             "Mojang-API antwortet mit Status: {status}",
             "Mojang API responds with status: {status}");
+        
+        // RELOAD COMMAND
+        addMessage("reload.success",
+            "§a✓ Konfiguration wurde erfolgreich neu geladen!",
+            "§a✓ Configuration reloaded successfully!");
+        
+        // LIST COMMAND
+        addMessage("list.header",
+            "========== §eInvite-Liste §7==========",
+            "========== §eInvite List §7==========");
+        addMessage("list.footer",
+            "===================================",
+            "===================================");
+        addMessage("list.own.count",
+            "§7Du hast §e{count}§7/§e{limit}§7 Spieler eingeladen",
+            "§7You have invited §e{count}§7/§e{limit}§7 players");
+        addMessage("list.own.remaining",
+            "§7Verbleibende Invites: §e{remaining}",
+            "§7Remaining invites: §e{remaining}");
+        addMessage("list.own.invited",
+            "§7Eingeladene Spieler:",
+            "§7Invited players:");
+        addMessage("list.own.none",
+            "§7Du hast noch niemanden eingeladen.",
+            "§7You haven't invited anyone yet.");
+        addMessage("list.other.header",
+            "======= §eInvites von {player} §7=======",
+            "======= §e{player}'s Invites §7=======");
+        addMessage("list.other.count",
+            "§e{player}§7 hat §e{count}§7/§e{limit}§7 Spieler eingeladen",
+            "§e{player}§7 has invited §e{count}§7/§e{limit}§7 players");
+        addMessage("list.other.none",
+            "§e{player}§7 hat noch niemanden eingeladen.",
+            "§e{player}§7 hasn't invited anyone yet.");
+        addMessage("list.all.header",
+            "======== §eAlle Invites §7========",
+            "======== §eAll Invites §7========");
+        addMessage("list.all.total",
+            "§7Gesamt: §e{total}§7 Invites",
+            "§7Total: §e{total}§7 invites");
+        addMessage("list.all.top",
+            "§7Top Inviter:",
+            "§7Top Inviters:");
     }
     
     /**

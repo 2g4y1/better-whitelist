@@ -14,6 +14,14 @@ commands:
   uninvite:
     description: Entfernt einen Spieler von der Whitelist
     usage: /uninvite <Spielername>
+  invitelist:
+    description: Zeigt deine Invites an
+    usage: /invitelist [Spielername]
+    aliases: [ilist, invites]
+  betterwhitelist:
+    description: Lädt die Konfiguration neu
+    usage: /betterwhitelist reload
+    aliases: [bwl, bwhitelist]
 
 permissions:
   invite.use:
