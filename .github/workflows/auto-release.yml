@@ -50,7 +50,17 @@ jobs:
       run: |
         mv target/better-whitelist-*.jar target/better-whitelist-${{ steps.version.outputs.VERSION }}-${{ steps.commit.outputs.SHORT_SHA }}.jar
         
-    - name: Check if tag exists
+    - name: Check if version tag exists
+      id: version_tag
+      run: |
+        # Prüfe ob ein v*.*.* Tag auf dem aktuellen Commit existiert
+        if git describe --exact-match --tags HEAD 2>/dev/null | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$'; then
+          echo "HAS_VERSION_TAG=true" >> $GITHUB_OUTPUT
+        else
+          echo "HAS_VERSION_TAG=false" >> $GITHUB_OUTPUT
+        fi
+        
+    - name: Check if build tag exists
       id: tag_exists
       run: |
         if git rev-parse "${{ steps.version.outputs.VERSION }}" >/dev/null 2>&1; then
@@ -60,7 +70,7 @@ jobs:
         fi
         
     - name: Create Release
-      if: steps.tag_exists.outputs.EXISTS == 'false'
+      if: steps.tag_exists.outputs.EXISTS == 'false' && steps.version_tag.outputs.HAS_VERSION_TAG == 'false'
       uses: softprops/action-gh-release@v1
       with:
         tag_name: ${{ steps.version.outputs.VERSION }}
