@@ -30,11 +30,12 @@ BetterWhitelist gives trusted players the ability to independently add friends t
 - 🚫 **Auto-Kick on Removal** - Players are kicked when uninvited
 - 📊 **Invite Tracking & Limits** - Track who invited whom, configurable max invites (default: 5)
 - 📋 **Statistics & Management** - View invites, remaining slots, admin tools
+- ⚡ **Mutual Boost System** - XP boost when mutually invited players are nearby
 - 🔄 **Hot Reload** - Update config without restart
 - 🔐 **Permission System** - Secure role-based access control
 - 👥 **LuckPerms Integration** - Optional automatic group assignment
 - 🌍 **Multilingual** - German and English support
-- ⚡ **High Performance** - Async operations, persistent JSON storage
+- ⚙️ **High Performance** - Async operations, persistent JSON storage
 
 ---
 
@@ -80,6 +81,16 @@ max-invites: 5         # Max invites per player (admins unlimited)
 luckperms:
   enabled: false
   default-group: "default"
+
+# Mutual Boost System - XP bonus when invited friends play together
+mutual-invite-boost:
+  enabled: true
+  xp-multiplier: 1.5   # 50% XP bonus
+  xp-share: 0.25       # Share 25% XP with nearby partner
+  radius:
+    overworld: 50      # Block radius per dimension
+    nether: 75
+    end: 100
 ```
 
 ---
@@ -89,6 +100,14 @@ luckperms:
 Players can invite up to 5 friends (configurable). Use `/invitelist` to see your invites and remaining slots. When you uninvite someone, the slot becomes available again. All invites are tracked with timestamps in `invites.json`.
 
 **Admin Features:** View any player's invites, unlimited invites, see top inviters from console.
+
+### ⚡ Mutual Boost System
+
+When two players have invited each other (mutual invites) and are within range:
+- 🎯 **XP Boost** - Configurable XP multiplier (default: 1.5x)
+- 🤝 **XP Sharing** - Share part of your XP gains with your partner
+- ✨ **Visual Effects** - Particle effects and actionbar notifications
+- 🌍 **Per-Dimension Radius** - Different ranges for Overworld, Nether, and End
 
 ---
 
