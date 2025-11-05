@@ -21,8 +21,9 @@
 ### ✨ Features
 
 - 🤝 Players can invite friends independently
+- 🚫 Players are automatically kicked when removed from whitelist
 - 🔒 Permission-based security
-- � German and English support
+- 🌍 German and English support
 - ⚡ Async processing (no lag)
 - 🎯 Optional LuckPerms group assignment
 
@@ -72,7 +73,9 @@ luckperms:
 | Command | Permission | Description |
 |---------|-----------|-------------|
 | `/invite <player>` | `invite.use` | Add player to whitelist |
-| `/uninvite <player>` | `invite.admin` | Remove player from whitelist |
+| `/uninvite <player>` | `invite.admin` | Remove player from whitelist (kicks if online) |
+
+**Tab Completion**: Both commands support tab completion for player names.
 
 ---
 
@@ -105,7 +108,7 @@ docker run --rm -v "$(pwd)":/app -w /app maven:3.9-eclipse-temurin-21 mvn clean 
 
 ---
 
-## � License
+## 📄 License
 
 MIT License - Free to use and modify.
 
