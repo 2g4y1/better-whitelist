@@ -1,188 +1,374 @@
-name: Releasename: Release
+name: Releasename: Releasename: Release
 
 
 
-on:on:
-
-  # Automatischer Release bei Push zu main (wenn Code geändert wurde)  push:
-
-  push:    tags:
-
-    branches:      - 'v*.*.*'
-
-      - main  workflow_dispatch:
-
-    paths:    inputs:
-
-      - 'src/**'      version:
-
-      - 'pom.xml'        description: 'Release version (e.g., v1.0.0)'
-
-          required: true
-
-  # Manueller Release mit Version-Tag        type: string
+on:
 
   push:
 
+    branches:on:on:
+
+      - main
+
+    paths:  # Automatischer Release bei Push zu main (wenn Code geändert wurde)  push:
+
+      - 'src/**'
+
+      - 'pom.xml'  push:    tags:
+
+    tags:
+
+      - 'v*.*.*'    branches:      - 'v*.*.*'
+
+  workflow_dispatch:
+
+    inputs:      - main  workflow_dispatch:
+
+      version:
+
+        description: 'Release version (e.g., v1.0.5)'    paths:    inputs:
+
+        required: true
+
+        type: string      - 'src/**'      version:
+
+      prerelease:
+
+        description: 'Mark as pre-release'      - 'pom.xml'        description: 'Release version (e.g., v1.0.0)'
+
+        required: false
+
+        type: boolean          required: true
+
+        default: false
+
+  # Manueller Release mit Version-Tag        type: string
+
+concurrency:
+
+  group: release-${{ github.ref }}  push:
+
+  cancel-in-progress: true
+
     tags:jobs:
 
-      - 'v*.*.*'  release:
+jobs:
 
-      runs-on: ubuntu-latest
+  release:      - 'v*.*.*'  release:
 
-  # Manueller Trigger    permissions:
+    runs-on: ubuntu-latest
 
-  workflow_dispatch:      contents: write
+    permissions:      runs-on: ubuntu-latest
 
-    inputs:    
+      contents: write
 
-      version:    steps:
+      # Manueller Trigger    permissions:
 
-        description: 'Release version (e.g., v1.0.4)'    - name: Checkout code
+    steps:
 
-        required: true      uses: actions/checkout@v4
+    - name: Checkout code  workflow_dispatch:      contents: write
 
-        type: string      
+      uses: actions/checkout@v4
 
-      prerelease:    - name: Set up JDK 21
+      with:    inputs:    
 
-        description: 'Mark as pre-release'      uses: actions/setup-java@v4
+        fetch-depth: 0
 
-        required: false      with:
+            version:    steps:
 
-        type: boolean        java-version: '21'
+    - name: Set up JDK 21
 
-        default: false        distribution: 'temurin'
-
-        cache: maven
-
-concurrency:    
-
-  group: release-${{ github.ref }}    - name: Cache Maven packages
-
-  cancel-in-progress: true      uses: actions/cache@v4
+      uses: actions/setup-java@v4        description: 'Release version (e.g., v1.0.4)'    - name: Checkout code
 
       with:
 
-jobs:        path: ~/.m2/repository
+        java-version: '21'        required: true      uses: actions/checkout@v4
 
-  release:        key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+        distribution: 'temurin'
 
-    runs-on: ubuntu-latest        restore-keys: |
+        cache: maven        type: string      
 
-    permissions:          ${{ runner.os }}-maven-
+    
 
-      contents: write        
+    - name: Cache Maven packages      prerelease:    - name: Set up JDK 21
 
-        - name: Build with Maven
+      uses: actions/cache@v4
 
-    steps:      run: mvn clean package --batch-mode
+      with:        description: 'Mark as pre-release'      uses: actions/setup-java@v4
 
-    - name: Checkout code      
+        path: ~/.m2/repository
 
-      uses: actions/checkout@v4    - name: Get commit info
+        key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}        required: false      with:
 
-      with:      id: commit
+        restore-keys: |
 
-        fetch-depth: 0      run: echo "SHORT_SHA=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+          ${{ runner.os }}-maven-        type: boolean        java-version: '21'
 
-            
+    
 
-    - name: Set up JDK 21    - name: Get version
+    - name: Determine release type        default: false        distribution: 'temurin'
 
-      uses: actions/setup-java@v4      id: version
+      id: release_type
 
-      with:      run: |
+      run: |        cache: maven
 
-        java-version: '21'        if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+        if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
 
-        distribution: 'temurin'          echo "VERSION=${{ github.event.inputs.version }}" >> $GITHUB_OUTPUT
+          echo "TYPE=manual" >> $GITHUB_OUTPUTconcurrency:    
 
-        cache: maven        else
+          echo "IS_PRERELEASE=${{ github.event.inputs.prerelease }}" >> $GITHUB_OUTPUT
 
-              echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+        elif [[ "${{ github.ref }}" == refs/tags/v* ]]; then  group: release-${{ github.ref }}    - name: Cache Maven packages
 
-    - name: Cache Maven packages        fi
+          echo "TYPE=version_tag" >> $GITHUB_OUTPUT
 
-      uses: actions/cache@v4    
+          echo "IS_PRERELEASE=false" >> $GITHUB_OUTPUT  cancel-in-progress: true      uses: actions/cache@v4
 
-      with:    - name: Get previous tag
+        else
 
-        path: ~/.m2/repository      id: prev_tag
+          echo "TYPE=auto" >> $GITHUB_OUTPUT      with:
 
-        key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}      run: |
+          echo "IS_PRERELEASE=true" >> $GITHUB_OUTPUT
 
-        restore-keys: |        PREV_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
+        fijobs:        path: ~/.m2/repository
 
-          ${{ runner.os }}-maven-        echo "PREV_TAG=$PREV_TAG" >> $GITHUB_OUTPUT
+    
+
+    - name: Check if version tag exists on current commit  release:        key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+
+      id: version_tag_check
+
+      run: |    runs-on: ubuntu-latest        restore-keys: |
+
+        if git describe --exact-match --tags HEAD 2>/dev/null | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$'; then
+
+          echo "HAS_VERSION_TAG=true" >> $GITHUB_OUTPUT    permissions:          ${{ runner.os }}-maven-
+
+        else
+
+          echo "HAS_VERSION_TAG=false" >> $GITHUB_OUTPUT      contents: write        
+
+        fi
+
+            - name: Build with Maven
+
+    - name: Skip if auto-release and version tag exists
+
+      if: steps.release_type.outputs.TYPE == 'auto' && steps.version_tag_check.outputs.HAS_VERSION_TAG == 'true'    steps:      run: mvn clean package --batch-mode
+
+      run: |
+
+        echo "⏭️ Überspringe Auto-Release, da ein Version-Tag existiert"    - name: Checkout code      
+
+        exit 0
+
+              uses: actions/checkout@v4    - name: Get commit info
+
+    - name: Build with Maven
+
+      run: mvn clean package --batch-mode      with:      id: commit
+
+      
+
+    - name: Get commit info        fetch-depth: 0      run: echo "SHORT_SHA=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+
+      id: commit
+
+      run: |            
+
+        echo "COUNT=$(git rev-list --count HEAD)" >> $GITHUB_OUTPUT
+
+        echo "SHORT_SHA=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT    - name: Set up JDK 21    - name: Get version
+
+      
+
+    - name: Determine version      uses: actions/setup-java@v4      id: version
+
+      id: version
+
+      run: |      with:      run: |
+
+        if [[ "${{ steps.release_type.outputs.TYPE }}" == "manual" ]]; then
+
+          echo "VERSION=${{ github.event.inputs.version }}" >> $GITHUB_OUTPUT        java-version: '21'        if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+
+        elif [[ "${{ steps.release_type.outputs.TYPE }}" == "version_tag" ]]; then
+
+          echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT        distribution: 'temurin'          echo "VERSION=${{ github.event.inputs.version }}" >> $GITHUB_OUTPUT
+
+        else
+
+          echo "VERSION=v1.0.0-build.${{ steps.commit.outputs.COUNT }}" >> $GITHUB_OUTPUT        cache: maven        else
+
+        fi
+
+                  echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+
+    - name: Get previous tag
+
+      id: prev_tag    - name: Cache Maven packages        fi
+
+      run: |
+
+        PREV_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")      uses: actions/cache@v4    
+
+        echo "PREV_TAG=$PREV_TAG" >> $GITHUB_OUTPUT
+
+          with:    - name: Get previous tag
+
+    - name: Check if tag already exists
+
+      id: tag_exists        path: ~/.m2/repository      id: prev_tag
+
+      run: |
+
+        if git rev-parse "${{ steps.version.outputs.VERSION }}" >/dev/null 2>&1; then        key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}      run: |
+
+          echo "EXISTS=true" >> $GITHUB_OUTPUT
+
+        else        restore-keys: |        PREV_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
+
+          echo "EXISTS=false" >> $GITHUB_OUTPUT
+
+        fi          ${{ runner.os }}-maven-        echo "PREV_TAG=$PREV_TAG" >> $GITHUB_OUTPUT
+
+      
+
+    - name: Rename JAR with version and commit ID          
+
+      if: steps.tag_exists.outputs.EXISTS == 'false'
+
+      run: |    - name: Determine release type    - name: Rename JAR with commit ID
+
+        mv target/better-whitelist-*.jar target/better-whitelist-${{ steps.version.outputs.VERSION }}-${{ steps.commit.outputs.SHORT_SHA }}.jar
+
+          id: release_type      run: |
+
+    - name: Generate checksums
+
+      if: steps.tag_exists.outputs.EXISTS == 'false'      run: |        mv target/better-whitelist-*.jar target/better-whitelist-${{ steps.version.outputs.VERSION }}-${{ steps.commit.outputs.SHORT_SHA }}.jar
+
+      run: |
+
+        cd target        if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then    
+
+        sha256sum better-whitelist-*.jar > better-whitelist-${{ steps.version.outputs.VERSION }}-${{ steps.commit.outputs.SHORT_SHA }}.jar.sha256
+
+        echo "📋 Checksumme:"          echo "TYPE=manual" >> $GITHUB_OUTPUT    - name: Generate checksums
+
+        cat *.sha256
+
+              echo "IS_PRERELEASE=${{ github.event.inputs.prerelease }}" >> $GITHUB_OUTPUT      run: |
+
+    - name: Create release body
+
+      if: steps.tag_exists.outputs.EXISTS == 'false'        elif [[ "${{ github.ref }}" == refs/tags/v* ]]; then        cd target
+
+      id: release_body
+
+      run: |          echo "TYPE=version_tag" >> $GITHUB_OUTPUT        sha256sum better-whitelist-*.jar > better-whitelist-${{ steps.version.outputs.VERSION }}-${{ steps.commit.outputs.SHORT_SHA }}.jar.sha256
+
+        if [[ "${{ steps.release_type.outputs.TYPE }}" == "auto" ]]; then
+
+          echo "TITLE=Auto Release ${{ steps.version.outputs.VERSION }}" >> $GITHUB_OUTPUT          echo "IS_PRERELEASE=false" >> $GITHUB_OUTPUT        cat *.sha256
+
+          echo "BODY=Automatisches Pre-Release von Commit ${{ steps.commit.outputs.SHORT_SHA }}" >> $GITHUB_OUTPUT
+
+        else        else        
+
+          echo "TITLE=Release ${{ steps.version.outputs.VERSION }}" >> $GITHUB_OUTPUT
+
+          BODY="## 📦 Installation          echo "TYPE=auto" >> $GITHUB_OUTPUT    - name: Create Release
+
+        Lade die JAR-Datei herunter und kopiere sie in deinen plugins Ordner.
+
+                  echo "IS_PRERELEASE=true" >> $GITHUB_OUTPUT      uses: softprops/action-gh-release@v1
+
+        ## 🔐 Checksumme
+
+        SHA256-Datei ist im Download enthalten.        fi      with:
+
+        
+
+        **Commit:** ${{ steps.commit.outputs.SHORT_SHA }}"            tag_name: ${{ steps.version.outputs.VERSION }}
 
           
 
-    - name: Determine release type    - name: Rename JAR with commit ID
+          if [[ -n "${{ steps.prev_tag.outputs.PREV_TAG }}" ]]; then    - name: Check if version tag exists on current commit        name: Release ${{ steps.version.outputs.VERSION }}
 
-      id: release_type      run: |
+            BODY="$BODY
 
-      run: |        mv target/better-whitelist-*.jar target/better-whitelist-${{ steps.version.outputs.VERSION }}-${{ steps.commit.outputs.SHORT_SHA }}.jar
+              id: version_tag_check        draft: false
 
-        if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then    
+        **Vergleich:** [${{ steps.prev_tag.outputs.PREV_TAG }}...${{ steps.version.outputs.VERSION }}](https://github.com/${{ github.repository }}/compare/${{ steps.prev_tag.outputs.PREV_TAG }}...${{ steps.version.outputs.VERSION }})"
 
-          echo "TYPE=manual" >> $GITHUB_OUTPUT    - name: Generate checksums
+          fi      run: |        prerelease: false
 
-          echo "IS_PRERELEASE=${{ github.event.inputs.prerelease }}" >> $GITHUB_OUTPUT      run: |
+          
 
-        elif [[ "${{ github.ref }}" == refs/tags/v* ]]; then        cd target
+          echo "BODY<<EOF" >> $GITHUB_OUTPUT        if git describe --exact-match --tags HEAD 2>/dev/null | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$'; then        generate_release_notes: true
 
-          echo "TYPE=version_tag" >> $GITHUB_OUTPUT        sha256sum better-whitelist-*.jar > better-whitelist-${{ steps.version.outputs.VERSION }}-${{ steps.commit.outputs.SHORT_SHA }}.jar.sha256
+          echo "$BODY" >> $GITHUB_OUTPUT
 
-          echo "IS_PRERELEASE=false" >> $GITHUB_OUTPUT        cat *.sha256
+          echo "EOF" >> $GITHUB_OUTPUT          echo "HAS_VERSION_TAG=true" >> $GITHUB_OUTPUT        body: |
 
-        else        
+        fi
 
-          echo "TYPE=auto" >> $GITHUB_OUTPUT    - name: Create Release
+                else          ## 📦 Installation
 
-          echo "IS_PRERELEASE=true" >> $GITHUB_OUTPUT      uses: softprops/action-gh-release@v1
+    - name: Create Release
 
-        fi      with:
+      if: steps.tag_exists.outputs.EXISTS == 'false'          echo "HAS_VERSION_TAG=false" >> $GITHUB_OUTPUT          Lade die `better-whitelist-${{ steps.version.outputs.VERSION }}-${{ steps.commit.outputs.SHORT_SHA }}.jar` herunter und kopiere sie in deinen `plugins` Ordner.
 
-            tag_name: ${{ steps.version.outputs.VERSION }}
+      uses: softprops/action-gh-release@v2
 
-    - name: Check if version tag exists on current commit        name: Release ${{ steps.version.outputs.VERSION }}
+      with:        fi          
 
-      id: version_tag_check        draft: false
+        tag_name: ${{ steps.version.outputs.VERSION }}
 
-      run: |        prerelease: false
+        name: ${{ steps.release_body.outputs.TITLE }}              ## 🔐 Checksumme
 
-        if git describe --exact-match --tags HEAD 2>/dev/null | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$'; then        generate_release_notes: true
+        draft: false
 
-          echo "HAS_VERSION_TAG=true" >> $GITHUB_OUTPUT        body: |
+        prerelease: ${{ steps.release_type.outputs.IS_PRERELEASE }}    - name: Skip if auto-release and version tag exists          ```
 
-        else          ## 📦 Installation
+        generate_release_notes: true
 
-          echo "HAS_VERSION_TAG=false" >> $GITHUB_OUTPUT          Lade die `better-whitelist-${{ steps.version.outputs.VERSION }}-${{ steps.commit.outputs.SHORT_SHA }}.jar` herunter und kopiere sie in deinen `plugins` Ordner.
+        body: ${{ steps.release_body.outputs.BODY }}      if: steps.release_type.outputs.TYPE == 'auto' && steps.version_tag_check.outputs.HAS_VERSION_TAG == 'true'          SHA256: siehe .sha256 Datei im Download
 
-        fi          
+        files: |
 
-              ## 🔐 Checksumme
+          target/better-whitelist-${{ steps.version.outputs.VERSION }}-${{ steps.commit.outputs.SHORT_SHA }}.jar      run: |          ```
 
-    - name: Skip if auto-release and version tag exists          ```
+          target/better-whitelist-${{ steps.version.outputs.VERSION }}-${{ steps.commit.outputs.SHORT_SHA }}.jar.sha256
 
-      if: steps.release_type.outputs.TYPE == 'auto' && steps.version_tag_check.outputs.HAS_VERSION_TAG == 'true'          SHA256: siehe .sha256 Datei im Download
+      env:        echo "⏭️ Überspringe Auto-Release, da ein Version-Tag existiert"          
 
-      run: |          ```
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-        echo "⏭️ Überspringe Auto-Release, da ein Version-Tag existiert"          
+            exit 0          ---
 
-        exit 0          ---
+    - name: Release Summary
 
-                  
+      if: steps.tag_exists.outputs.EXISTS == 'false'                  
 
-    - name: Build with Maven          **Commit-ID:** ${{ steps.commit.outputs.SHORT_SHA }}
+      run: |
 
-      run: mvn clean package --batch-mode          
+        echo "## 🎉 Release erstellt!" >> $GITHUB_STEP_SUMMARY    - name: Build with Maven          **Commit-ID:** ${{ steps.commit.outputs.SHORT_SHA }}
 
-                ${{ steps.prev_tag.outputs.PREV_TAG && format('**Vergleich:** [{0}...{1}](https://github.com/{2}/compare/{0}...{1})', steps.prev_tag.outputs.PREV_TAG, steps.version.outputs.VERSION, github.repository) || '' }}
+        echo "" >> $GITHUB_STEP_SUMMARY
 
-    - name: Get commit info        files: |
+        echo "**Version:** ${{ steps.version.outputs.VERSION }}" >> $GITHUB_STEP_SUMMARY      run: mvn clean package --batch-mode          
+
+        echo "**Typ:** ${{ steps.release_type.outputs.TYPE }}" >> $GITHUB_STEP_SUMMARY
+
+        echo "**Pre-Release:** ${{ steps.release_type.outputs.IS_PRERELEASE }}" >> $GITHUB_STEP_SUMMARY                ${{ steps.prev_tag.outputs.PREV_TAG && format('**Vergleich:** [{0}...{1}](https://github.com/{2}/compare/{0}...{1})', steps.prev_tag.outputs.PREV_TAG, steps.version.outputs.VERSION, github.repository) || '' }}
+
+        echo "**Commit:** ${{ steps.commit.outputs.SHORT_SHA }}" >> $GITHUB_STEP_SUMMARY
+
+        echo "" >> $GITHUB_STEP_SUMMARY    - name: Get commit info        files: |
+
+        echo "[🔗 Zum Release](https://github.com/${{ github.repository }}/releases/tag/${{ steps.version.outputs.VERSION }})" >> $GITHUB_STEP_SUMMARY
 
       id: commit          target/better-whitelist-${{ steps.version.outputs.VERSION }}-${{ steps.commit.outputs.SHORT_SHA }}.jar
 
