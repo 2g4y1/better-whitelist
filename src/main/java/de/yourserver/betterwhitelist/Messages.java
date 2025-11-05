@@ -143,6 +143,9 @@ public class Messages {
         addMessage("uninvite.broadcast",
             "§7[§cUninvite§7] §e{sender} §7hat §e{player} §7von der Whitelist entfernt.",
             "§7[§cUninvite§7] §e{sender} §7removed §e{player} §7from the whitelist.");
+        addMessage("uninvite.kick_message",
+            "Du wurdest von der Whitelist entfernt!",
+            "You have been removed from the whitelist!");
         
         // CONSOLE MESSAGES
         addMessage("console.invite.header",
@@ -182,6 +185,9 @@ public class Messages {
         addMessage("console.uninvite.whitelist",
             "  Von Whitelist entfernt: ✓",
             "  Removed from Whitelist: ✓");
+        addMessage("console.uninvite.kicked",
+            "  Spieler {player} wurde gekickt: ✓",
+            "  Player {player} was kicked: ✓");
         addMessage("console.uninvite.footer",
             "========================================",
             "========================================");

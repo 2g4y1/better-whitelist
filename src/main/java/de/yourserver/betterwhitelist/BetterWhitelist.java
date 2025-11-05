@@ -317,6 +317,16 @@ public class BetterWhitelist extends JavaPlugin {
                 // Verwende den nativen whitelist Befehl
                 getServer().dispatchCommand(getServer().getConsoleSender(), "whitelist remove " + playerName);
                 
+                // Spieler kicken, falls online
+                org.bukkit.entity.Player onlinePlayer = getServer().getPlayer(uuid);
+                if (onlinePlayer != null && onlinePlayer.isOnline()) {
+                    onlinePlayer.kick(createMessage(
+                        messages.get("uninvite.kick_message"),
+                        NamedTextColor.RED
+                    ));
+                    getLogger().info(messages.get("console.uninvite.kicked", "player", playerName));
+                }
+                
                 // Konsolennachricht
                 getLogger().info(messages.get("console.uninvite.header"));
                 getLogger().info(messages.get("console.uninvite.title"));
