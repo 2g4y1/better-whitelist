@@ -26,7 +26,9 @@ public class MutualBoostManager implements Listener {
     
     // Config values
     private boolean enabled;
-    private int radius;
+    private int radius;  // Default/Overworld radius
+    private int radiusNether;  // Nether radius
+    private int radiusEnd;     // End radius
     private double xpMultiplier;
     private int checkInterval;
     private boolean showActionbar;
@@ -34,6 +36,8 @@ public class MutualBoostManager implements Listener {
     private int maxBoostPartners;  // Maximale Anzahl Partner die gleichzeitig boosten
     private double maxMultiplier;   // Maximaler Multiplikator
     private int minXpForBoost;      // Minimum XP um Boost zu aktivieren (verhindert Spam)
+    private boolean xpSharing;      // Ob XP mit Partnern geteilt wird
+    private double xpSharePercentage; // Prozentsatz der XP die geteilt werden
     
     // Tracking
     private final Map<UUID, Set<UUID>> activeBoosts = new HashMap<>();
@@ -57,7 +61,9 @@ public class MutualBoostManager implements Listener {
      */
     public void loadConfig() {
         enabled = plugin.getConfig().getBoolean("mutual-invite-boost.enabled", true);
-        radius = plugin.getConfig().getInt("mutual-invite-boost.radius", 50);
+        radius = plugin.getConfig().getInt("mutual-invite-boost.radius.overworld", 50);
+        radiusNether = plugin.getConfig().getInt("mutual-invite-boost.radius.nether", 75);
+        radiusEnd = plugin.getConfig().getInt("mutual-invite-boost.radius.end", 100);
         xpMultiplier = plugin.getConfig().getDouble("mutual-invite-boost.xp-multiplier", 1.5);
         checkInterval = plugin.getConfig().getInt("mutual-invite-boost.check-interval", 5);
         showActionbar = plugin.getConfig().getBoolean("mutual-invite-boost.show-actionbar", true);
@@ -67,11 +73,17 @@ public class MutualBoostManager implements Listener {
         maxBoostPartners = plugin.getConfig().getInt("mutual-invite-boost.max-boost-partners", 3);
         maxMultiplier = plugin.getConfig().getDouble("mutual-invite-boost.max-multiplier", 2.5);
         minXpForBoost = plugin.getConfig().getInt("mutual-invite-boost.min-xp-for-boost", 1);
+        xpSharing = plugin.getConfig().getBoolean("mutual-invite-boost.xp-sharing.enabled", true);
+        xpSharePercentage = plugin.getConfig().getDouble("mutual-invite-boost.xp-sharing.share-percentage", 0.25);
         
-        // Sicherstellen dass Werte in vernünftigen Grenzen sind
-        xpMultiplier = Math.min(xpMultiplier, maxMultiplier);
-        xpMultiplier = Math.max(xpMultiplier, 1.0);
-        maxBoostPartners = Math.max(1, Math.min(maxBoostPartners, 10));
+        // Validierung
+        if (maxBoostPartners < 1) maxBoostPartners = 1;
+        if (maxBoostPartners > 10) maxBoostPartners = 10;
+        if (maxMultiplier < 1.0) maxMultiplier = 1.0;
+        if (maxMultiplier > 5.0) maxMultiplier = 5.0;
+        if (minXpForBoost < 0) minXpForBoost = 0;
+        if (xpSharePercentage < 0.05) xpSharePercentage = 0.05; // Min 5%
+        if (xpSharePercentage > 0.50) xpSharePercentage = 0.50; // Max 50%
     }
     
     /**
@@ -104,6 +116,35 @@ public class MutualBoostManager implements Listener {
         }
         activeBoosts.clear();
         lastActionbarSent.clear();
+    }
+    
+    /**
+     * Gibt den Radius für die Welt des Spielers zurück
+     */
+    private int getRadiusForWorld(Player player) {
+        String worldName = player.getWorld().getName().toLowerCase();
+        
+        // Nether-Check (verschiedene Welt-Namen möglich)
+        // Unterstützt: world_nether, DIM-1, custom_nether, etc.
+        if (worldName.contains("nether")) {
+            return radiusNether;
+        }
+        
+        // End-Check
+        // Unterstützt: world_the_end, DIM1, the_end, custom_end, etc.
+        if (worldName.contains("end") || worldName.equals("the_end")) {
+            return radiusEnd;
+        }
+        
+        // Custom-Welten: Versuche aus Config zu laden
+        // Falls nicht gefunden, verwende Overworld als Standard
+        String configPath = "mutual-invite-boost.radius.custom-worlds." + worldName;
+        if (plugin.getConfig().contains(configPath)) {
+            return plugin.getConfig().getInt(configPath, radius);
+        }
+        
+        // Default: Overworld-Radius für alle anderen Welten
+        return radius;
     }
     
     /**
@@ -146,9 +187,12 @@ public class MutualBoostManager implements Listener {
         Set<UUID> mutuals = new HashSet<>();
         UUID playerUuid = player.getUniqueId();
         
+        // Welt-spezifischer Radius
+        int currentRadius = getRadiusForWorld(player);
+        
         // Finde Spieler in Reichweite
         Collection<Entity> nearby = player.getWorld()
-            .getNearbyEntities(player.getLocation(), radius, radius, radius);
+            .getNearbyEntities(player.getLocation(), currentRadius, currentRadius, currentRadius);
         
         for (Entity entity : nearby) {
             if (!(entity instanceof Player nearbyPlayer)) continue;
@@ -243,7 +287,7 @@ public class MutualBoostManager implements Listener {
     }
     
     /**
-     * XP Event Handler - Wendet Multiplikator an
+     * XP Event Handler - Wendet Multiplikator an und teilt XP mit Partnern
      */
     @EventHandler
     public void onPlayerExpChange(PlayerExpChangeEvent event) {
@@ -280,6 +324,45 @@ public class MutualBoostManager implements Listener {
             // Anti-Exploit: Tracking
             int gained = xpGainedThisPeriod.getOrDefault(playerUuid, 0);
             xpGainedThisPeriod.put(playerUuid, gained + boostedXP);
+            
+            // XP-Sharing: Gib einen Teil der XP an Boost-Partner
+            if (xpSharing && originalXP > 0) {
+                shareXpWithPartners(player, originalXP, mutuals);
+            }
+        }
+    }
+    
+    /**
+     * Teilt XP mit nahegelegenen Boost-Partnern
+     */
+    private void shareXpWithPartners(Player sourcePlayer, int originalXP, Set<UUID> partners) {
+        int shareAmount = (int)(originalXP * xpSharePercentage);
+        
+        // Mindestens 1 XP teilen, wenn überhaupt geteilt wird
+        if (shareAmount < 1) {
+            shareAmount = 1;
+        }
+        
+        // Cap auch für geteilte XP
+        int maxXpPerEvent = plugin.getConfig().getInt("mutual-invite-boost.max-xp-per-event", 1000);
+        shareAmount = Math.min(shareAmount, maxXpPerEvent);
+        
+        for (UUID partnerUuid : partners) {
+            Player partner = Bukkit.getPlayer(partnerUuid);
+            if (partner != null && partner.isOnline()) {
+                // Welt-spezifischer Radius für Distanzprüfung
+                int currentRadius = getRadiusForWorld(sourcePlayer);
+                
+                // Prüfe ob Partner noch in Reichweite ist
+                if (sourcePlayer.getLocation().distance(partner.getLocation()) <= currentRadius) {
+                    // Gib XP an Partner
+                    partner.giveExp(shareAmount);
+                    
+                    // Tracking für Partner
+                    int partnerGained = xpGainedThisPeriod.getOrDefault(partnerUuid, 0);
+                    xpGainedThisPeriod.put(partnerUuid, partnerGained + shareAmount);
+                }
+            }
         }
     }
     

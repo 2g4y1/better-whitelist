@@ -61,10 +61,41 @@ mutual-invite-boost:
   # System aktivieren / Enable system
   enabled: true
   
-  # Radius in Blöcken / Radius in blocks
-  # Wie nah müssen die Spieler beieinander sein?
-  # How close do players need to be to each other?
-  radius: 50
+  # Radius in Blöcken (weltabhängig) / Radius in blocks (world-dependent)
+  # Unterschiedliche Radien für verschiedene Welten
+  # Different radii for different worlds
+  radius:
+    # Overworld - Standard-Welt
+    # Perfekt für Basen und Farmen
+    # Perfect for bases and farms
+    overworld: 50
+    
+    # Nether - Größerer Radius wegen weiten Distanzen
+    # Larger radius due to vast distances
+    # Gute Balance zwischen zusammen spielen und Freiheit
+    # Good balance between playing together and freedom
+    nether: 75
+    
+    # End - Maximaler Radius für Dragon Fight und Endbusting
+    # Maximum radius for dragon fight and endbusting
+    # Ermöglicht kooperatives End-Game
+    # Enables cooperative end-game content
+    end: 100
+    
+    # Custom-Welten (optional) / Custom worlds (optional)
+    # Füge hier eigene Welten hinzu mit ihrem exakten Namen
+    # Add your own worlds here with their exact name
+    # Beispiel / Example:
+    # custom-worlds:
+    #   mining_world: 60
+    #   creative_world: 200
+    #   skyblock: 30
+    #
+    # Hinweis: Weltnamen müssen exakt übereinstimmen (Groß-/Kleinschreibung egal)
+    # Note: World names must match exactly (case-insensitive)
+    # 
+    # Wenn keine Custom-Welt definiert ist, wird der Overworld-Radius verwendet
+    # If no custom world is defined, the overworld radius will be used
   
   # XP-Multiplikator / XP multiplier
   # 1.0 = Normal, 1.5 = +50%, 2.0 = +100%
@@ -118,6 +149,24 @@ mutual-invite-boost:
   # Prevents exploit through extreme XP sources
   # Standard: 1000 (selbst mit Boost nicht mehr als 1000 XP pro Event)
   max-xp-per-event: 1000
+  
+  # ===== XP-SHARING SYSTEM =====
+  
+  # XP-Teilung zwischen Boost-Partnern
+  # XP sharing between boost partners
+  # Wenn ein Spieler XP aufsammelt, bekommen Partner auch etwas davon
+  # When a player collects XP, partners also get some of it
+  xp-sharing:
+    # System aktivieren / Enable system
+    enabled: true
+    
+    # Prozentsatz der XP die geteilt werden / Percentage of XP to share
+    # 0.25 = 25% der ursprünglichen XP gehen an jeden Partner
+    # 0.25 = 25% of the original XP goes to each partner
+    # Beispiel: Spieler A sammelt 10 XP auf → Partner B bekommt 2-3 XP
+    # Example: Player A collects 10 XP → Partner B gets 2-3 XP
+    # Minimum: 0.05 (5%) | Maximum: 0.50 (50%)
+    share-percentage: 0.25
 
 # ============================================
 # Hinweise / Notes
