@@ -89,7 +89,7 @@ public class BetterWhitelist extends JavaPlugin {
         getCommand("invite").setExecutor(new InviteCommand(this));
         getCommand("invite").setTabCompleter(new InviteTabCompleter(this));
         getCommand("uninvite").setExecutor(new UninviteCommand(this));
-        getCommand("uninvite").setTabCompleter(new UninviteTabCompleter());
+        getCommand("uninvite").setTabCompleter(new UninviteTabCompleter(this));
         getCommand("invitelist").setExecutor(new ListCommand(this));
         getCommand("betterwhitelist").setExecutor(new ReloadCommand(this));
         getLogger().info(messages.get("loading.commands"));
