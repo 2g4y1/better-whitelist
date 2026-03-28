@@ -32,22 +32,6 @@ public class BetterWhitelist extends JavaPlugin {
     private InviteData inviteData;
     private int maxInvites;
     private MutualBoostManager boostManager;
-    private enum MessageType {
-        INVITE("invite"),
-        UNINVITE("uninvite"),
-        ERROR_INVITE("error"),
-        ERROR_UNINVITE("error");
-
-        private final String keyPart;
-
-        MessageType(String keyPart) {
-            this.keyPart = keyPart;
-        }
-
-        public String keyPart() {
-            return keyPart;
-        }
-    }
 
     @Override
     public void onEnable() {
@@ -457,11 +441,11 @@ public class BetterWhitelist extends JavaPlugin {
             
             getServer().getScheduler().runTask(this, () -> {
                 sender.sendMessage(createMessage(
-                    messages.get("invite.error", "player", playerName),
+                    messages.get("uninvite.error", "player", playerName),
                     NamedTextColor.RED
                 ));
                 sender.sendMessage(createMessage(
-                    messages.get("invite.check_logs"),
+                    messages.get("uninvite.check_logs"),
                     NamedTextColor.GRAY
                 ));
             });
