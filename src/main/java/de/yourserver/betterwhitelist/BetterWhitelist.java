@@ -23,6 +23,10 @@ public class BetterWhitelist extends JavaPlugin {
 
     private LuckPerms luckPerms;
     private boolean luckPermsEnabled;
+    private boolean floodgateEnabled;
+    private String fuidAPI;
+    private String fuidField;
+    private String floodgatePrefix;
     private String defaultGroup;
     private Messages messages;
     private InviteData inviteData;
@@ -62,7 +66,7 @@ public class BetterWhitelist extends JavaPlugin {
 
         // Commands registrieren
         getCommand("invite").setExecutor(new InviteCommand(this));
-        getCommand("invite").setTabCompleter(new InviteTabCompleter());
+        getCommand("invite").setTabCompleter(new InviteTabCompleter(this));
         getCommand("uninvite").setExecutor(new UninviteCommand(this));
         getCommand("uninvite").setTabCompleter(new UninviteTabCompleter());
         getCommand("invitelist").setExecutor(new ListCommand(this));
@@ -100,6 +104,10 @@ public class BetterWhitelist extends JavaPlugin {
         String lang = getConfig().getString("language", "de");
         messages = new Messages(lang);
         
+        floodgateEnabled = getConfig().getBoolean("floodgate-support.enabled", false);
+        fuidAPI = getConfig().getString("floodgate-support.fuid-api", "https://mcprofile.io/api/v1/bedrock/gamertag/{gamertag}");
+        fuidField = getConfig().getString("floodgate-support.fuid-field", "floodgateuid");
+        floodgatePrefix = getConfig().getString("floodgate-support.prefix", ".");
         luckPermsEnabled = getConfig().getBoolean("luckperms.enabled", true);
         defaultGroup = getConfig().getString("luckperms.default-group", "default");
         maxInvites = getConfig().getInt("max-invites", 5);
@@ -165,6 +173,13 @@ public class BetterWhitelist extends JavaPlugin {
     }
 
     /**
+     * Returns whether Floodgate is enabled
+     */
+    public boolean isFloodgateEnabled() {
+        return floodgateEnabled;
+    }
+
+    /**
      * Gibt den Namen der Standard-Gruppe zurück
      */
     public String getDefaultGroup() {
@@ -178,8 +193,9 @@ public class BetterWhitelist extends JavaPlugin {
      *
      * @param playerName Name des Spielers
      * @param sender Der CommandSender für Feedback
+     * @param isBedrock if target player is bedrock player (floodgate)
      */
-    public void invitePlayer(String playerName, org.bukkit.command.CommandSender sender) {
+    public void invitePlayer(String playerName, org.bukkit.command.CommandSender sender, boolean isBedrock) {
         try {
             // Check invite limit (nur für Spieler, nicht für Console/Admins)
             if (sender instanceof org.bukkit.entity.Player) {
@@ -198,93 +214,120 @@ public class BetterWhitelist extends JavaPlugin {
                     return;
                 }
             }
-            
-            // UUID von der Mojang-API holen (läuft bereits async)
-            UUID uuid = getUUIDFromMojang(playerName);
-            if (uuid == null) {
-                getLogger().warning(messages.get("mojang.player_not_exists", "player", playerName));
+            if (isBedrock) {
+                UUID UUID = getFUID(playerName);
+                if (UUID == null) {
+                    playerNotFound(playerName, sender, isBedrock);
+                    return;
+                }
                 getServer().getScheduler().runTask(this, () -> {
+                    boolean success = getServer().dispatchCommand(
+                        getServer().getConsoleSender(),
+                        "fwhitelist add " + UUID.toString()
+                    );
+
+                    if (!success) {
+                        sender.sendMessage(createMessage(
+                            "Failed to add Bedrock player to Floodgate whitelist: " + playerName,
+                            NamedTextColor.RED
+                        ));
+                        return;
+                    }
+                    if (sender instanceof org.bukkit.entity.Player player) {
+                        inviteData.addInvite(player.getUniqueId(), player.getName(), UUID, floodgatePrefix + playerName);
+                    }
+
                     sender.sendMessage(createMessage(
-                        messages.get("invite.not_found", "player", playerName),
-                        NamedTextColor.RED
+                        "Bedrock player " + playerName + " was added to the whitelist.",
+                        NamedTextColor.GREEN
                     ));
-                    sender.sendMessage(createMessage(
-                        messages.get("invite.check_name"),
-                        NamedTextColor.GRAY
-                    ));
+
+                    if (sender instanceof org.bukkit.entity.Player player) {
+                        int remaining = maxInvites - inviteData.getInviteCount(player.getUniqueId());
+                        sender.sendMessage(createMessage(
+                            messages.get("invite.remaining", "remaining", remaining),
+                            remaining > 0 ? NamedTextColor.YELLOW : NamedTextColor.RED
+                        ));
+                    }
                 });
-                return;
-            }
-
-            // OfflinePlayer mit UUID UND Namen erstellen (Paper API)
-            OfflinePlayer offlinePlayer = Bukkit.getOfflinePlayer(uuid);
-            
-            // Whitelist muss auf dem Main-Thread gesetzt werden
-            getServer().getScheduler().runTask(this, () -> {
-                // Verwende den nativen whitelist Befehl, um sicherzustellen, dass der Name gespeichert wird
-                getServer().dispatchCommand(getServer().getConsoleSender(), "whitelist add " + playerName);
-
-                // Invite-Daten speichern (nur wenn Spieler, nicht Console)
-                if (sender instanceof org.bukkit.entity.Player) {
-                    org.bukkit.entity.Player player = (org.bukkit.entity.Player) sender;
-                    inviteData.addInvite(player.getUniqueId(), player.getName(), uuid, playerName);
+            } else {
+                // UUID von der Mojang-API holen (läuft bereits async)
+                UUID uuid = getUUIDFromMojang(playerName);
+                if (uuid == null) {
+                    playerNotFound(playerName, sender, isBedrock);
+                    return;
                 }
 
-                // Konsolennachricht
-                getLogger().info(messages.get("console.invite.header"));
-                getLogger().info(messages.get("console.invite.title"));
-                getLogger().info(messages.get("console.invite.player", "player", playerName));
-                getLogger().info(messages.get("console.invite.uuid", "uuid", uuid));
-                getLogger().info(messages.get("console.invite.whitelist"));
-                if (isLuckPermsEnabled()) {
-                    getLogger().info(messages.get("console.invite.group", "group", defaultGroup));
-                }
-                getLogger().info(messages.get("console.invite.footer"));
+                // OfflinePlayer mit UUID UND Namen erstellen (Paper API)
+                OfflinePlayer offlinePlayer = Bukkit.getOfflinePlayer(uuid);
+                
+                // Whitelist muss auf dem Main-Thread gesetzt werden
+                getServer().getScheduler().runTask(this, () -> {
+                    // Verwende den nativen whitelist Befehl, um sicherzustellen, dass der Name gespeichert wird
+                    getServer().dispatchCommand(getServer().getConsoleSender(), "whitelist add " + playerName);
 
-                // Feedback an Sender
-                sender.sendMessage(createMessage(
-                    messages.get("invite.success", "player", playerName),
-                    NamedTextColor.GREEN
-                ));
-                sender.sendMessage(createMessage(
-                    messages.get("invite.whitelist"),
-                    NamedTextColor.GRAY
-                ));
-                if (isLuckPermsEnabled()) {
+                    // Invite-Daten speichern (nur wenn Spieler, nicht Console)
+                    if (sender instanceof org.bukkit.entity.Player) {
+                        org.bukkit.entity.Player player = (org.bukkit.entity.Player) sender;
+                        inviteData.addInvite(player.getUniqueId(), player.getName(), uuid, playerName);
+                    }
+
+                    // Konsolennachricht
+                    getLogger().info(messages.get("console.invite.header"));
+                    getLogger().info(messages.get("console.invite.title"));
+                    getLogger().info(messages.get("console.invite.player", "player", playerName));
+                    getLogger().info(messages.get("console.invite.uuid", "uuid", uuid));
+                    getLogger().info(messages.get("console.invite.whitelist"));
+                    if (isLuckPermsEnabled()) {
+                        getLogger().info(messages.get("console.invite.group", "group", defaultGroup));
+                    }
+                    getLogger().info(messages.get("console.invite.footer"));
+
+                    // Feedback an Sender
                     sender.sendMessage(createMessage(
-                        messages.get("invite.group", "group", defaultGroup),
+                        messages.get("invite.success", "player", playerName),
+                        NamedTextColor.GREEN
+                    ));
+                    sender.sendMessage(createMessage(
+                        messages.get("invite.whitelist"),
                         NamedTextColor.GRAY
                     ));
-                }
-                
-                // Zeige verbleibende Invites (nur für Spieler)
-                if (sender instanceof org.bukkit.entity.Player) {
-                    org.bukkit.entity.Player player = (org.bukkit.entity.Player) sender;
-                    int remaining = maxInvites - inviteData.getInviteCount(player.getUniqueId());
-                    sender.sendMessage(createMessage(
-                        messages.get("invite.remaining", "remaining", remaining),
-                        remaining > 0 ? NamedTextColor.YELLOW : NamedTextColor.RED
-                    ));
-                }
+                    if (isLuckPermsEnabled()) {
+                        sender.sendMessage(createMessage(
+                            messages.get("invite.group", "group", defaultGroup),
+                            NamedTextColor.GRAY
+                        ));
+                    }
+                    
+                    // Zeige verbleibende Invites (nur für Spieler)
+                    if (sender instanceof org.bukkit.entity.Player) {
+                        org.bukkit.entity.Player player = (org.bukkit.entity.Player) sender;
+                        int remaining = maxInvites - inviteData.getInviteCount(player.getUniqueId());
+                        sender.sendMessage(createMessage(
+                            messages.get("invite.remaining", "remaining", remaining),
+                            remaining > 0 ? NamedTextColor.YELLOW : NamedTextColor.RED
+                        ));
+                    }
 
-                // Broadcast an alle Online-Spieler mit der Permission
-                getServer().getOnlinePlayers().stream()
-                    .filter(p -> p.hasPermission("invite.use"))
-                    .forEach(p -> {
-                        if (!p.equals(sender)) {
-                            p.sendMessage(createMessage(
-                                messages.get("invite.broadcast", 
-                                    "sender", sender.getName(),
-                                    "player", playerName),
-                                NamedTextColor.GRAY
-                            ));
-                        }
-                    });
-            });
+                    // Broadcast an alle Online-Spieler mit der Permission
+                    getServer().getOnlinePlayers().stream()
+                        .filter(p -> p.hasPermission("invite.use"))
+                        .forEach(p -> {
+                            if (!p.equals(sender)) {
+                                p.sendMessage(createMessage(
+                                    messages.get("invite.broadcast", 
+                                        "sender", sender.getName(),
+                                        "player", playerName),
+                                    NamedTextColor.GRAY
+                                ));
+                            }
+                        });
+                });
 
-            // LuckPerms-Gruppe setzen (läuft bereits async), nur wenn aktiviert
-            if (isLuckPermsEnabled()) {
-                setPlayerGroup(offlinePlayer, defaultGroup);
+                // LuckPerms-Gruppe setzen (läuft bereits async), nur wenn aktiviert
+                if (isLuckPermsEnabled()) {
+                    setPlayerGroup(offlinePlayer, defaultGroup);
+                }
             }
 
         } catch (Exception e) {
@@ -306,6 +349,21 @@ public class BetterWhitelist extends JavaPlugin {
                 ));
             });
         }
+    }
+
+    private void playerNotFound(String playerName, org.bukkit.command.CommandSender sender, boolean isBedrock) {
+        getLogger().warning(messages.get("mojang.player_not_exists", "player", playerName));
+        getServer().getScheduler().runTask(this, () -> {
+            sender.sendMessage(createMessage(
+                messages.get("invite.not_found", "player", playerName),
+                NamedTextColor.RED
+            ));
+            sender.sendMessage(createMessage(
+                messages.get("invite.check_name"),
+                NamedTextColor.GRAY
+            ));
+        });
+        return;
     }
 
     /**
@@ -353,6 +411,39 @@ public class BetterWhitelist extends JavaPlugin {
             }
         } catch (Exception e) {
             getLogger().severe(messages.get("mojang.error", "error", e.getMessage()));
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    private UUID getFUID(String playerName) {
+        try {
+            URL url = new URL(fuidAPI.replace("{gamertag}", playerName));
+            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+            connection.setRequestMethod("GET");
+            connection.setConnectTimeout(5000);
+            connection.setReadTimeout(5000);
+
+            int responseCode = connection.getResponseCode();
+            if (responseCode == 200) {
+                BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+                StringBuilder response = new StringBuilder();
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    response.append(line);
+                }
+                reader.close();
+
+                // JSON parsen
+                JsonObject json = JsonParser.parseString(response.toString()).getAsJsonObject();
+                String uuidString = json.get(fuidField).getAsString();
+                return UUID.fromString(uuidString);
+            } else {
+                getLogger().warning(messages.get("fuid.status", "api", "Floodgate", "status", responseCode));
+                return null;
+            }
+        } catch (Exception e) {
+            getLogger().severe(messages.get("fuid.error", "error", e.getMessage()));
             e.printStackTrace();
             return null;
         }

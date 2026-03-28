@@ -30,6 +30,20 @@ language: "de"
 max-invites: 5
 
 # ============================================
+# Floodgate (Bedrock) Support
+# ============================================
+
+floodgate-support:
+  enabled: false
+  # URL for fuid lookup, {gamertag} will be replaced with the actual gamertag
+  fuid-api: "https://mcprofile.io/api/v1/bedrock/gamertag/{gamertag}"
+  # Prefix added before bedrock player names in invites.json
+  prefix: "."
+  # Field of fuid
+  fuid-field: "floodgateuid"
+
+
+# ============================================
 # LuckPerms Integration
 # ============================================
 

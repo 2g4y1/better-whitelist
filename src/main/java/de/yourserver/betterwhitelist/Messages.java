@@ -93,6 +93,9 @@ public class Messages {
         addMessage("invite.usage",
             "§eVerwendung: /invite <Spielername>",
             "§eUsage: /invite <playername>");
+        addMessage("invite.usage_floodgate",
+            "§eVerwendung: /invite <Spielername> [bedrock]",
+            "§eUsage: /invite <playername> [bedrock]");
         addMessage("invite.loading",
             "§7Lade Spielerdaten von Mojang...",
             "§7Loading player data from Mojang...");
@@ -131,6 +134,9 @@ public class Messages {
         addMessage("uninvite.usage",
             "§eVerwendung: /uninvite <Spielername>",
             "§eUsage: /uninvite <playername>");
+        addMessage("uninvite.usage_floodgate",
+            "§eVerwendung: /uninvite <Spielername> [bedrock]",
+            "§eUsage: /uninvite <playername> [bedrock]");
         addMessage("uninvite.loading",
             "§7Lade Spielerdaten von Mojang...",
             "§7Loading player data from Mojang...");
@@ -250,6 +256,14 @@ public class Messages {
         addMessage("mojang.status",
             "Mojang-API antwortet mit Status: {status}",
             "Mojang API responds with status: {status}");
+
+        // FUID API MESSAGES
+        addMessage("fuid.error",
+            "Fehler beim Abrufen der UUID von {api}: {error}",
+            "Error retrieving UUID from {api}: {error}");
+        addMessage("fuid.status",
+            "{api} antwortet mit Status: {status}",
+            "{api} API responds with status: {status}");
         
         // RELOAD COMMAND
         addMessage("reload.success",
