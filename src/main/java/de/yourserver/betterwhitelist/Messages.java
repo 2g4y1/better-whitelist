@@ -36,6 +36,9 @@ public class Messages {
         addMessage("loading.config.luckperms",
             "  - LuckPerms-Integration: ",
             "  - LuckPerms Integration: ");
+        addMessage("loading.config.floodgate",
+            "  - Floodgate-Integration: ",
+            "  - Floodgate Integration: ");
         addMessage("loading.config.group",
             "  - Standard-Gruppe: ",
             "  - Default Group: ");

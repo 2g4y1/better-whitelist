@@ -124,6 +124,8 @@ public class BetterWhitelist extends JavaPlugin {
         if (luckPermsEnabled) {
             getLogger().info(messages.get("loading.config.group") + defaultGroup);
         }
+        getLogger().info(messages.get("loading.config.floodgate") + 
+            (floodgateEnabled ? "✓" : "✗"));
         getLogger().info(messages.get("loading.config.max_invites") + maxInvites);
     }
 
