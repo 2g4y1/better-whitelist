@@ -42,11 +42,19 @@ public class InviteCommand implements CommandExecutor {
         String playerName = args[0];
         final boolean isBedrock = args.length == 2 && args[1].equals("bedrock");
 
-        // Nachricht, dass es lädt
-        sender.sendMessage(plugin.createMessage(
-            plugin.getMessages().get("invite.loading"),
-            NamedTextColor.GRAY
-        ));
+        // Message for loading
+        if (isBedrock) {
+            sender.sendMessage(plugin.createMessage(
+                plugin.getMessages().get("invite.loading_floodgate", "api", plugin.getFuidApi()),
+                NamedTextColor.GRAY
+            ));
+        } else {
+            sender.sendMessage(plugin.createMessage(
+                plugin.getMessages().get("invite.loading"),
+                NamedTextColor.GRAY
+            ));
+        }
+        
 
         // UUID-Abfrage async, dann Whitelist auf Main-Thread
         plugin.getServer().getScheduler().runTaskAsynchronously(plugin, () -> {

@@ -180,6 +180,13 @@ public class BetterWhitelist extends JavaPlugin {
     }
 
     /**
+     * Returns Floodgate player FUID query API
+     */
+    public String getFuidApi() {
+        return fuidAPI;
+    }
+
+    /**
      * Gibt den Namen der Standard-Gruppe zurück
      */
     public String getDefaultGroup() {
@@ -439,11 +446,11 @@ public class BetterWhitelist extends JavaPlugin {
                 String uuidString = json.get(fuidField).getAsString();
                 return UUID.fromString(uuidString);
             } else {
-                getLogger().warning(messages.get("fuid.status", "api", "Floodgate", "status", responseCode));
+                getLogger().warning(messages.get("fuid.status", "api", fuidAPI, "status", responseCode));
                 return null;
             }
         } catch (Exception e) {
-            getLogger().severe(messages.get("fuid.error", "error", e.getMessage()));
+            getLogger().severe(messages.get("fuid.error", "api", fuidAPI, "error", e.getMessage()));
             e.printStackTrace();
             return null;
         }

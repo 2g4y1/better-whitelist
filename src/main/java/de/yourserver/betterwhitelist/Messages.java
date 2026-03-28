@@ -99,6 +99,9 @@ public class Messages {
         addMessage("invite.loading",
             "§7Lade Spielerdaten von Mojang...",
             "§7Loading player data from Mojang...");
+        addMessage("invite.loading_floodgate",
+            "§7Lade Spielerdaten von {api}...",
+            "§7Loading player data from {api}...");
         addMessage("invite.not_found",
             "§c✗ Spieler §e{player}§c wurde nicht gefunden!",
             "§c✗ Player §e{player}§c not found!");
