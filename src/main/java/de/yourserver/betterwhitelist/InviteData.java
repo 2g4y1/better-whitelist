@@ -70,8 +70,14 @@ public class InviteData {
      */
     public void addInvite(UUID inviter, String inviterName, UUID invited, String invitedName) {
         String inviterKey = inviter.toString();
-        
         invites.computeIfAbsent(inviterKey, k -> new ArrayList<>());
+        
+        List<InviteRecord> records = invites.get(inviterKey);
+        boolean alreadyExists = records.stream()
+            .anyMatch(record -> record.getInvitedUuid().equalsIgnoreCase(invited.toString()));
+        if (alreadyExists) {
+            return;
+        }
         
         InviteRecord record = new InviteRecord(
             invited.toString(),
@@ -83,7 +89,7 @@ public class InviteData {
         invites.get(inviterKey).add(record);
         save();
     }
-    
+
     /**
      * Entfernt einen Invite (wenn jemand uninvited wird)
      */
