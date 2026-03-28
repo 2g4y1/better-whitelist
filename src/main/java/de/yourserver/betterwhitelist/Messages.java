@@ -57,6 +57,12 @@ public class Messages {
         addMessage("loading.luckperms.config_disabled",
             "✓ LuckPerms-Integration ist deaktiviert.",
             "✓ LuckPerms integration is disabled.");
+        addMessage("loading.floodgate.notfound",
+            "✗ Floodgate wurde nicht gefunden, aber in der Config aktiviert!",
+            "✗ Floodgate not found but enabled in config!");
+        addMessage("loading.floodgate.disabled",
+            "  Floodgate-Integration wird deaktiviert.",
+            "  Floodgate integration will be disabled.");
         addMessage("loading.commands",
             "✓ Commands registriert: /invite, /uninvite",
             "✓ Commands registered: /invite, /uninvite");
@@ -143,6 +149,9 @@ public class Messages {
         addMessage("uninvite.loading",
             "§7Lade Spielerdaten von Mojang...",
             "§7Loading player data from Mojang...");
+        addMessage("uninvite.loading_floodgate",
+            "§7Lade Spielerdaten von {api}...",
+            "§7Loading player data from {api}...");
         addMessage("uninvite.not_found",
             "§c✗ Spieler §e{player}§c wurde nicht gefunden!",
             "§c✗ Player §e{player}§c not found!");

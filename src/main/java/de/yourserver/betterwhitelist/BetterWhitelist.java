@@ -32,13 +32,28 @@ public class BetterWhitelist extends JavaPlugin {
     private InviteData inviteData;
     private int maxInvites;
     private MutualBoostManager boostManager;
+    private enum MessageType {
+        INVITE("invite"),
+        UNINVITE("uninvite"),
+        ERROR_INVITE("error"),
+        ERROR_UNINVITE("error");
+
+        private final String keyPart;
+
+        MessageType(String keyPart) {
+            this.keyPart = keyPart;
+        }
+
+        public String keyPart() {
+            return keyPart;
+        }
+    }
 
     @Override
     public void onEnable() {
         // Config laden oder erstellen
         saveDefaultConfig();
         loadConfiguration();
-        
         // Invite-Datenbank laden
         inviteData = new InviteData(getDataFolder());
         
@@ -64,6 +79,12 @@ public class BetterWhitelist extends JavaPlugin {
             }
         }
 
+        // Check if floodgate support is enabled mistakenly
+        if (floodgateEnabled && Bukkit.getPluginManager().getPlugin("floodgate") == null) {
+            getLogger().warning(messages.get("loading.floodgate.notfound"));
+            getLogger().warning(messages.get("loading.floodgate.disabled"));
+            floodgateEnabled = false;
+        }
         // Commands registrieren
         getCommand("invite").setExecutor(new InviteCommand(this));
         getCommand("invite").setTabCompleter(new InviteTabCompleter(this));
@@ -193,6 +214,7 @@ public class BetterWhitelist extends JavaPlugin {
         return defaultGroup;
     }
 
+
     /**
      * Fügt einen Spieler zur Whitelist hinzu und weist ihm die default-Gruppe zu
      * Holt die UUID über die Mojang-API, ähnlich wie /whitelist add
@@ -221,122 +243,97 @@ public class BetterWhitelist extends JavaPlugin {
                     return;
                 }
             }
+            UUID uuid;
             if (isBedrock) {
-                UUID UUID = getFUID(playerName);
-                if (UUID == null) {
-                    playerNotFound(playerName, sender, isBedrock);
+                uuid = getFUID(playerName);
+                if (uuid == null) {
+                    playerNotFound(playerName, sender);
                     return;
                 }
                 getServer().getScheduler().runTask(this, () -> {
-                    boolean success = getServer().dispatchCommand(
-                        getServer().getConsoleSender(),
-                        "fwhitelist add " + UUID.toString()
-                    );
-
-                    if (!success) {
-                        sender.sendMessage(createMessage(
-                            "Failed to add Bedrock player to Floodgate whitelist: " + playerName,
-                            NamedTextColor.RED
-                        ));
-                        return;
-                    }
-                    if (sender instanceof org.bukkit.entity.Player player) {
-                        inviteData.addInvite(player.getUniqueId(), player.getName(), UUID, floodgatePrefix + playerName);
-                    }
-
-                    sender.sendMessage(createMessage(
-                        "Bedrock player " + playerName + " was added to the whitelist.",
-                        NamedTextColor.GREEN
-                    ));
-
-                    if (sender instanceof org.bukkit.entity.Player player) {
-                        int remaining = maxInvites - inviteData.getInviteCount(player.getUniqueId());
-                        sender.sendMessage(createMessage(
-                            messages.get("invite.remaining", "remaining", remaining),
-                            remaining > 0 ? NamedTextColor.YELLOW : NamedTextColor.RED
-                        ));
+                    getServer().dispatchCommand(getServer().getConsoleSender(), "fwhitelist add " + uuid.toString());
+                    // Invite-Daten speichern (nur wenn Spieler, nicht Console)
+                    if (sender instanceof org.bukkit.entity.Player) {
+                        org.bukkit.entity.Player player = (org.bukkit.entity.Player) sender;
+                        inviteData.addInvite(player.getUniqueId(), player.getName(), uuid, floodgatePrefix + playerName);
                     }
                 });
             } else {
                 // UUID von der Mojang-API holen (läuft bereits async)
-                UUID uuid = getUUIDFromMojang(playerName);
+                uuid = getUUIDFromMojang(playerName);
                 if (uuid == null) {
-                    playerNotFound(playerName, sender, isBedrock);
+                    playerNotFound(playerName, sender);
                     return;
                 }
-
-                // OfflinePlayer mit UUID UND Namen erstellen (Paper API)
-                OfflinePlayer offlinePlayer = Bukkit.getOfflinePlayer(uuid);
-                
                 // Whitelist muss auf dem Main-Thread gesetzt werden
                 getServer().getScheduler().runTask(this, () -> {
                     // Verwende den nativen whitelist Befehl, um sicherzustellen, dass der Name gespeichert wird
                     getServer().dispatchCommand(getServer().getConsoleSender(), "whitelist add " + playerName);
-
                     // Invite-Daten speichern (nur wenn Spieler, nicht Console)
                     if (sender instanceof org.bukkit.entity.Player) {
                         org.bukkit.entity.Player player = (org.bukkit.entity.Player) sender;
                         inviteData.addInvite(player.getUniqueId(), player.getName(), uuid, playerName);
                     }
+                });
+            }
+            getServer().getScheduler().runTask(this, () -> {
+                // Konsolennachricht
+                getLogger().info(messages.get("console.invite.header"));
+                getLogger().info(messages.get("console.invite.title"));
+                getLogger().info(messages.get("console.invite.player", "player", playerName));
+                getLogger().info(messages.get("console.invite.uuid", "uuid", uuid));
+                getLogger().info(messages.get("console.invite.whitelist"));
+                if (isLuckPermsEnabled()) {
+                    getLogger().info(messages.get("console.invite.group", "group", defaultGroup));
+                }
+                getLogger().info(messages.get("console.invite.footer"));
 
-                    // Konsolennachricht
-                    getLogger().info(messages.get("console.invite.header"));
-                    getLogger().info(messages.get("console.invite.title"));
-                    getLogger().info(messages.get("console.invite.player", "player", playerName));
-                    getLogger().info(messages.get("console.invite.uuid", "uuid", uuid));
-                    getLogger().info(messages.get("console.invite.whitelist"));
-                    if (isLuckPermsEnabled()) {
-                        getLogger().info(messages.get("console.invite.group", "group", defaultGroup));
-                    }
-                    getLogger().info(messages.get("console.invite.footer"));
-
-                    // Feedback an Sender
+                // Feedback an Sender
+                sender.sendMessage(createMessage(
+                    messages.get("invite.success", "player", playerName),
+                    NamedTextColor.GREEN
+                ));
+                sender.sendMessage(createMessage(
+                    messages.get("invite.whitelist"),
+                    NamedTextColor.GRAY
+                ));
+                if (isLuckPermsEnabled()) {
                     sender.sendMessage(createMessage(
-                        messages.get("invite.success", "player", playerName),
-                        NamedTextColor.GREEN
-                    ));
-                    sender.sendMessage(createMessage(
-                        messages.get("invite.whitelist"),
+                        messages.get("invite.group", "group", defaultGroup),
                         NamedTextColor.GRAY
                     ));
-                    if (isLuckPermsEnabled()) {
-                        sender.sendMessage(createMessage(
-                            messages.get("invite.group", "group", defaultGroup),
-                            NamedTextColor.GRAY
-                        ));
-                    }
-                    
-                    // Zeige verbleibende Invites (nur für Spieler)
-                    if (sender instanceof org.bukkit.entity.Player) {
-                        org.bukkit.entity.Player player = (org.bukkit.entity.Player) sender;
-                        int remaining = maxInvites - inviteData.getInviteCount(player.getUniqueId());
-                        sender.sendMessage(createMessage(
-                            messages.get("invite.remaining", "remaining", remaining),
-                            remaining > 0 ? NamedTextColor.YELLOW : NamedTextColor.RED
-                        ));
-                    }
+                }
+                
+                // Zeige verbleibende Invites (nur für Spieler)
+                if (sender instanceof org.bukkit.entity.Player) {
+                    org.bukkit.entity.Player player = (org.bukkit.entity.Player) sender;
+                    int remaining = maxInvites - inviteData.getInviteCount(player.getUniqueId());
+                    sender.sendMessage(createMessage(
+                        messages.get("invite.remaining", "remaining", remaining),
+                        remaining > 0 ? NamedTextColor.YELLOW : NamedTextColor.RED
+                    ));
+                }
 
-                    // Broadcast an alle Online-Spieler mit der Permission
-                    getServer().getOnlinePlayers().stream()
-                        .filter(p -> p.hasPermission("invite.use"))
-                        .forEach(p -> {
-                            if (!p.equals(sender)) {
-                                p.sendMessage(createMessage(
-                                    messages.get("invite.broadcast", 
-                                        "sender", sender.getName(),
-                                        "player", playerName),
-                                    NamedTextColor.GRAY
-                                ));
-                            }
-                        });
-                });
-
+                // Broadcast an alle Online-Spieler mit der Permission
+                getServer().getOnlinePlayers().stream()
+                    .filter(p -> p.hasPermission("invite.use"))
+                    .forEach(p -> {
+                        if (!p.equals(sender)) {
+                            p.sendMessage(createMessage(
+                                messages.get("invite.broadcast", 
+                                    "sender", sender.getName(),
+                                    "player", playerName),
+                                NamedTextColor.GRAY
+                            ));
+                        }
+                    });
+                // OfflinePlayer mit UUID UND Namen erstellen (Paper API)
+                OfflinePlayer offlinePlayer = Bukkit.getOfflinePlayer(uuid);
                 // LuckPerms-Gruppe setzen (läuft bereits async), nur wenn aktiviert
                 if (isLuckPermsEnabled()) {
                     setPlayerGroup(offlinePlayer, defaultGroup);
                 }
-            }
-
+            });
         } catch (Exception e) {
             getLogger().severe(messages.get("console.error.header"));
             getLogger().severe(messages.get("console.error.invite_title"));
@@ -358,9 +355,125 @@ public class BetterWhitelist extends JavaPlugin {
         }
     }
 
-    private void playerNotFound(String playerName, org.bukkit.command.CommandSender sender, boolean isBedrock) {
+    /**
+     * Entfernt einen Spieler von der Whitelist
+     * Holt die UUID über die Mojang-API
+     * Diese Methode läuft async und führt die Whitelist-Operation auf dem Main-Thread aus
+     *
+     * @param playerName Name des Spielers
+     * @param sender Der CommandSender für Feedback
+     */
+    public void uninvitePlayer(String playerName, org.bukkit.command.CommandSender sender, boolean isBedrock) {
+        try {
+            UUID uuid;
+            if (isBedrock) {
+                uuid = getFUID(playerName);
+                if (uuid == null) {
+                    playerNotFound(playerName, sender);
+                    return;
+                }
+                getServer().getScheduler().runTask(this, () -> {
+                    getServer().dispatchCommand(
+                        getServer().getConsoleSender(),
+                        "fwhitelist remove " + uuid.toString()
+                    );
+                });
+            } else {
+                // UUID von der Mojang-API holen (läuft bereits async)
+                uuid = getUUIDFromMojang(playerName);
+                if (uuid == null) {
+                    playerNotFound(playerName, sender);
+                    return;
+                }
+
+                // OfflinePlayer mit der echten UUID erstellen und Whitelist auf Main-Thread setzen
+                getServer().getScheduler().runTask(this, () -> {                    
+                    // Verwende den nativen whitelist Befehl
+                    getServer().dispatchCommand(getServer().getConsoleSender(), "whitelist remove " + playerName);
+                });
+            }
+
+            getServer().getScheduler().runTask(this, () -> {
+                // Invite-Daten entfernen
+                inviteData.removeInvite(uuid);
+                // Spieler kicken, falls online
+                org.bukkit.entity.Player onlinePlayer = getServer().getPlayer(uuid);
+                if (onlinePlayer != null && onlinePlayer.isOnline()) {
+                    onlinePlayer.kick(createMessage(
+                        messages.get("uninvite.kick_message"),
+                        NamedTextColor.RED
+                    ));
+                    getLogger().info(messages.get("console.uninvite.kicked", "player", playerName));
+                }
+                
+                // Zeige wer den Spieler eingeladen hatte
+                Optional<String> inviter = inviteData.getInviter(uuid);
+                
+                // Konsolennachricht
+                getLogger().info(messages.get("console.uninvite.header"));
+                getLogger().info(messages.get("console.uninvite.title"));
+                getLogger().info(messages.get("console.uninvite.player", "player", playerName));
+                getLogger().info(messages.get("console.uninvite.uuid", "uuid", uuid));
+                if (inviter.isPresent()) {
+                    getLogger().info(messages.get("console.uninvite.inviter", "inviter", inviter.get()));
+                }
+                getLogger().info(messages.get("console.uninvite.whitelist"));
+                getLogger().info(messages.get("console.uninvite.footer"));
+
+                // Feedback an Sender
+                sender.sendMessage(createMessage(
+                    messages.get("uninvite.success", "player", playerName),
+                    NamedTextColor.GREEN
+                ));
+                
+                if (inviter.isPresent()) {
+                    sender.sendMessage(createMessage(
+                        messages.get("uninvite.inviter_info", "inviter", inviter.get()),
+                        NamedTextColor.GRAY
+                    ));
+                }
+
+                // Broadcast an alle Admins
+                getServer().getOnlinePlayers().stream()
+                    .filter(p -> p.hasPermission("invite.admin"))
+                    .forEach(p -> {
+                        if (!p.equals(sender)) {
+                            p.sendMessage(createMessage(
+                                messages.get("uninvite.broadcast",
+                                    "sender", sender.getName(),
+                                    "player", playerName),
+                                NamedTextColor.GRAY
+                            ));
+                        }
+                    });
+            });
+        } catch (Exception e) {
+            getLogger().severe(messages.get("console.error.header"));
+            getLogger().severe(messages.get("console.error.uninvite_title"));
+            getLogger().severe(messages.get("console.error.player", "player", playerName));
+            getLogger().severe(messages.get("console.error.message", "error", e.getMessage()));
+            getLogger().severe(messages.get("console.error.footer"));
+            e.printStackTrace();
+            
+            getServer().getScheduler().runTask(this, () -> {
+                sender.sendMessage(createMessage(
+                    messages.get("invite.error", "player", playerName),
+                    NamedTextColor.RED
+                ));
+                sender.sendMessage(createMessage(
+                    messages.get("invite.check_logs"),
+                    NamedTextColor.GRAY
+                ));
+            });
+        }
+    }
+
+    /**
+     * Send messages to command sender, indicating player is not found
+     */
+    private void playerNotFound(String playerName, org.bukkit.command.CommandSender sender) {
         getLogger().warning(messages.get("mojang.player_not_exists", "player", playerName));
-        getServer().getScheduler().runTask(this, () -> {
+        getServer().getScheduler().runTask(this, () -> {  // Both invite and uninvite uses the same messages, maybe remove duplicated messages if they weren't planned for future implementations?
             sender.sendMessage(createMessage(
                 messages.get("invite.not_found", "player", playerName),
                 NamedTextColor.RED
@@ -370,7 +483,6 @@ public class BetterWhitelist extends JavaPlugin {
                 NamedTextColor.GRAY
             ));
         });
-        return;
     }
 
     /**
@@ -425,7 +537,8 @@ public class BetterWhitelist extends JavaPlugin {
 
     private UUID getFUID(String playerName) {
         try {
-            URL url = new URL(fuidAPI.replace("{gamertag}", playerName));
+            String encodedName = java.net.URLEncoder.encode(playerName, java.nio.charset.StandardCharsets.UTF_8);
+            URL url = new URL(fuidAPI.replace("{gamertag}", encodedName));
             HttpURLConnection connection = (HttpURLConnection) url.openConnection();
             connection.setRequestMethod("GET");
             connection.setConnectTimeout(5000);
@@ -453,114 +566,6 @@ public class BetterWhitelist extends JavaPlugin {
             getLogger().severe(messages.get("fuid.error", "api", fuidAPI, "error", e.getMessage()));
             e.printStackTrace();
             return null;
-        }
-    }
-
-    /**
-     * Entfernt einen Spieler von der Whitelist
-     * Holt die UUID über die Mojang-API
-     * Diese Methode läuft async und führt die Whitelist-Operation auf dem Main-Thread aus
-     *
-     * @param playerName Name des Spielers
-     * @param sender Der CommandSender für Feedback
-     */
-    public void uninvitePlayer(String playerName, org.bukkit.command.CommandSender sender) {
-        try {
-            // UUID von der Mojang-API holen (läuft bereits async)
-            UUID uuid = getUUIDFromMojang(playerName);
-            if (uuid == null) {
-                getLogger().warning(messages.get("mojang.player_not_exists", "player", playerName));
-                getServer().getScheduler().runTask(this, () -> {
-                    sender.sendMessage(createMessage(
-                        messages.get("uninvite.not_found", "player", playerName),
-                        NamedTextColor.RED
-                    ));
-                    sender.sendMessage(createMessage(
-                        messages.get("uninvite.check_name"),
-                        NamedTextColor.GRAY
-                    ));
-                });
-                return;
-            }
-
-            // OfflinePlayer mit der echten UUID erstellen und Whitelist auf Main-Thread setzen
-            getServer().getScheduler().runTask(this, () -> {
-                // Invite-Daten entfernen
-                inviteData.removeInvite(uuid);
-                
-                // Verwende den nativen whitelist Befehl
-                getServer().dispatchCommand(getServer().getConsoleSender(), "whitelist remove " + playerName);
-                
-                // Spieler kicken, falls online
-                org.bukkit.entity.Player onlinePlayer = getServer().getPlayer(uuid);
-                if (onlinePlayer != null && onlinePlayer.isOnline()) {
-                    onlinePlayer.kick(createMessage(
-                        messages.get("uninvite.kick_message"),
-                        NamedTextColor.RED
-                    ));
-                    getLogger().info(messages.get("console.uninvite.kicked", "player", playerName));
-                }
-                
-                // Zeige wer den Spieler eingeladen hatte
-                Optional<String> inviter = inviteData.getInviter(uuid);
-                
-                // Konsolennachricht
-                getLogger().info(messages.get("console.uninvite.header"));
-                getLogger().info(messages.get("console.uninvite.title"));
-                getLogger().info(messages.get("console.uninvite.player", "player", playerName));
-                getLogger().info(messages.get("console.uninvite.uuid", "uuid", uuid));
-                if (inviter.isPresent()) {
-                    getLogger().info(messages.get("console.uninvite.inviter", "inviter", inviter.get()));
-                }
-                getLogger().info(messages.get("console.uninvite.whitelist"));
-                getLogger().info(messages.get("console.uninvite.footer"));
-                
-                // Feedback an Sender
-                sender.sendMessage(createMessage(
-                    messages.get("uninvite.success", "player", playerName),
-                    NamedTextColor.GREEN
-                ));
-                
-                if (inviter.isPresent()) {
-                    sender.sendMessage(createMessage(
-                        messages.get("uninvite.inviter_info", "inviter", inviter.get()),
-                        NamedTextColor.GRAY
-                    ));
-                }
-
-                // Broadcast an alle Admins
-                getServer().getOnlinePlayers().stream()
-                    .filter(p -> p.hasPermission("invite.admin"))
-                    .forEach(p -> {
-                        if (!p.equals(sender)) {
-                            p.sendMessage(createMessage(
-                                messages.get("uninvite.broadcast",
-                                    "sender", sender.getName(),
-                                    "player", playerName),
-                                NamedTextColor.GRAY
-                            ));
-                        }
-                    });
-            });
-            
-        } catch (Exception e) {
-            getLogger().severe(messages.get("console.error.header"));
-            getLogger().severe(messages.get("console.error.uninvite_title"));
-            getLogger().severe(messages.get("console.error.player", "player", playerName));
-            getLogger().severe(messages.get("console.error.message", "error", e.getMessage()));
-            getLogger().severe(messages.get("console.error.footer"));
-            e.printStackTrace();
-            
-            getServer().getScheduler().runTask(this, () -> {
-                sender.sendMessage(createMessage(
-                    messages.get("uninvite.error", "player", playerName),
-                    NamedTextColor.RED
-                ));
-                sender.sendMessage(createMessage(
-                    messages.get("uninvite.check_logs"),
-                    NamedTextColor.GRAY
-                ));
-            });
         }
     }
 

@@ -28,25 +28,33 @@ public class UninviteCommand implements CommandExecutor {
         }
 
         // Argument-Check
-        if (args.length != 1) {
+        if (args.length != 1 && !(args.length == 2 && plugin.isFloodgateEnabled() && args[1].equals("bedrock"))) {
             sender.sendMessage(plugin.createMessage(
-                plugin.getMessages().get("uninvite.usage"),
+                plugin.getMessages().get("invite.usage"),
                 NamedTextColor.YELLOW
             ));
             return true;
         }
 
         String playerName = args[0];
+        final boolean isBedrock = args.length == 2 && args[1].equals("bedrock");
 
-        // Nachricht, dass es lädt
-        sender.sendMessage(plugin.createMessage(
-            plugin.getMessages().get("uninvite.loading"),
-            NamedTextColor.GRAY
-        ));
+        // Message for loading
+        if (isBedrock) {
+            sender.sendMessage(plugin.createMessage(
+                plugin.getMessages().get("uninvite.loading_floodgate", "api", plugin.getFuidApi()),
+                NamedTextColor.GRAY
+            ));
+        } else {
+            sender.sendMessage(plugin.createMessage(
+                plugin.getMessages().get("uninvite.loading"),
+                NamedTextColor.GRAY
+            ));
+        }
 
         // UUID-Abfrage async, dann Whitelist auf Main-Thread
         plugin.getServer().getScheduler().runTaskAsynchronously(plugin, () -> {
-            plugin.uninvitePlayer(playerName, sender);
+            plugin.uninvitePlayer(playerName, sender, isBedrock);
         });
 
         return true;
