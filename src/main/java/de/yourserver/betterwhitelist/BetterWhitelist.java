@@ -46,34 +46,6 @@ public class BetterWhitelist extends JavaPlugin {
         // Mutual Boost Manager initialisieren
         boostManager = new MutualBoostManager(this, inviteData);
         
-        getLogger().info(messages.get("loading.header"));
-        getLogger().info(messages.get("loading.starting"));
-        getLogger().info(messages.get("loading.header"));
-        
-        // LuckPerms API laden
-        RegisteredServiceProvider<LuckPerms> provider = Bukkit.getServicesManager().getRegistration(LuckPerms.class);
-        if (provider != null) {
-            luckPerms = provider.getProvider();
-            getLogger().info(messages.get("loading.luckperms.found"));
-        } else {
-            if (luckPermsEnabled) {
-                getLogger().warning(messages.get("loading.luckperms.notfound"));
-                getLogger().warning(messages.get("loading.luckperms.disabled"));
-                luckPermsEnabled = false;
-            } else {
-                getLogger().info(messages.get("loading.luckperms.config_disabled"));
-            }
-        }
-
-        // Check if floodgate support is enabled mistakenly
-        if (floodgateEnabled && Bukkit.getPluginManager().getPlugin("floodgate") == null) {
-            getLogger().warning(messages.get("loading.floodgate.notfound"));
-            getLogger().warning(messages.get("loading.floodgate.disabled"));
-            floodgateEnabled = false;
-        }
-        if (floodgateEnabled) {
-            floodgateApi = FloodgateApi.getInstance();
-        }
         // Commands registrieren
         getCommand("invite").setExecutor(new InviteCommand(this));
         getCommand("invite").setTabCompleter(new InviteTabCompleter(this));
@@ -83,16 +55,6 @@ public class BetterWhitelist extends JavaPlugin {
         getCommand("betterwhitelist").setExecutor(new ReloadCommand(this));
         getLogger().info(messages.get("loading.commands"));
 
-        getLogger().info(messages.get("loading.header"));
-        getLogger().info(messages.get("loading.success", 
-            "version", getPluginMeta().getVersion()));
-        if (isLuckPermsEnabled()) {
-            getLogger().info(messages.get("loading.success.luckperms",
-                "group", defaultGroup));
-        } else {
-            getLogger().info(messages.get("loading.success.luckperms_disabled"));
-        }
-        getLogger().info(messages.get("loading.footer"));
     }
 
     @Override
@@ -113,6 +75,9 @@ public class BetterWhitelist extends JavaPlugin {
     private void loadConfiguration() {
         String lang = getConfig().getString("language", "de");
         messages = new Messages(lang);
+        getLogger().info(messages.get("loading.header"));
+        getLogger().info(messages.get("loading.starting"));
+        getLogger().info(messages.get("loading.header"));
         
         floodgateEnabled = getConfig().getBoolean("floodgate-support.enabled", false);
         fuidAPI = getConfig().getString("floodgate-support.fuid-api", "https://mcprofile.io/api/v1/bedrock/gamertag/{gamertag}");
@@ -121,6 +86,29 @@ public class BetterWhitelist extends JavaPlugin {
         luckPermsEnabled = getConfig().getBoolean("luckperms.enabled", true);
         defaultGroup = getConfig().getString("luckperms.default-group", "default");
         maxInvites = getConfig().getInt("max-invites", 5);
+        // LuckPerms API laden
+        RegisteredServiceProvider<LuckPerms> provider = Bukkit.getServicesManager().getRegistration(LuckPerms.class);
+        if (provider != null) {
+            luckPerms = provider.getProvider();
+            getLogger().info(messages.get("loading.luckperms.found"));
+        } else {
+            if (luckPermsEnabled) {
+                getLogger().warning(messages.get("loading.luckperms.notfound"));
+                getLogger().warning(messages.get("loading.luckperms.disabled"));
+                luckPermsEnabled = false;
+            } else {
+                getLogger().info(messages.get("loading.luckperms.config_disabled"));
+            }
+        }
+        // Check if floodgate support is enabled mistakenly
+        if (floodgateEnabled && Bukkit.getPluginManager().getPlugin("floodgate") == null) {
+            getLogger().warning(messages.get("loading.floodgate.notfound"));
+            getLogger().warning(messages.get("loading.floodgate.disabled"));
+            floodgateEnabled = false;
+        }
+        if (floodgateEnabled) {
+            floodgateApi = FloodgateApi.getInstance();
+        }
         
         getLogger().info(messages.get("loading.config"));
         getLogger().info(messages.get("loading.config.language") + lang);
@@ -132,6 +120,10 @@ public class BetterWhitelist extends JavaPlugin {
         getLogger().info(messages.get("loading.config.floodgate") + 
             (floodgateEnabled ? "✓" : "✗"));
         getLogger().info(messages.get("loading.config.max_invites") + maxInvites);
+        getLogger().info(messages.get("loading.header"));
+        getLogger().info(messages.get("loading.success", 
+            "version", getPluginMeta().getVersion()));
+        getLogger().info(messages.get("loading.header"));
     }
 
     /**
