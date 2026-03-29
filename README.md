@@ -54,6 +54,7 @@ BetterWhitelist gives trusted players the ability to independently add friends t
 | Command | Permission | Description |
 |---------|------------|-------------|
 | `/invite <player>` | `invite.use` | Invites a player to the whitelist |
+| `/invite <player> bedrock` | `invite.use` | Invites a floodgate player to the whitelist (requires floodgate to be enabled in config) |
 | `/uninvite <player>` | `invite.admin` | Removes a player (kicks if online) |
 | `/invitelist [player]` | `invite.use` | Shows your invites and remaining slots |
 | `/invitelist <player>` | `invite.admin` | View another player's invites |

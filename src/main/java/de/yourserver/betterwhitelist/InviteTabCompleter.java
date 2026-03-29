@@ -15,6 +15,12 @@ import java.util.stream.Collectors;
 
 public class InviteTabCompleter implements TabCompleter {
 
+    private final BetterWhitelist plugin;
+
+    public InviteTabCompleter(BetterWhitelist plugin) {
+        this.plugin = plugin;
+    }
+
     @Override
     @Nullable
     public List<String> onTabComplete(@NotNull CommandSender sender, @NotNull Command command,
@@ -28,6 +34,12 @@ public class InviteTabCompleter implements TabCompleter {
                 .collect(Collectors.toList());
             
             return suggestions;
+        }
+        if (args.length == 2 && plugin.isFloodgateEnabled()) {
+            // suggest "bedrock" for the second argument
+            if ("bedrock".startsWith(args[1].toLowerCase())) {
+                return Arrays.asList("bedrock");
+            }
         }
         
         return new ArrayList<>();
