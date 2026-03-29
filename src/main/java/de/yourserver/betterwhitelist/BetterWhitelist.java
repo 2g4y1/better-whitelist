@@ -5,6 +5,7 @@ import net.kyori.adventure.text.format.NamedTextColor;
 import net.luckperms.api.LuckPerms;
 import net.luckperms.api.model.user.User;
 import net.luckperms.api.node.Node;
+import org.geysermc.floodgate.api.FloodgateApi;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.plugin.RegisteredServiceProvider;
@@ -25,6 +26,7 @@ public class BetterWhitelist extends JavaPlugin {
     private boolean luckPermsEnabled;
     private boolean floodgateEnabled;
     private String fuidAPI;
+    private FloodgateApi floodgateApi;
     private String fuidField;
     private String floodgatePrefix;
     private String defaultGroup;
@@ -68,6 +70,9 @@ public class BetterWhitelist extends JavaPlugin {
             getLogger().warning(messages.get("loading.floodgate.notfound"));
             getLogger().warning(messages.get("loading.floodgate.disabled"));
             floodgateEnabled = false;
+        }
+        if (floodgateEnabled) {
+            floodgateApi = FloodgateApi.getInstance();
         }
         // Commands registrieren
         getCommand("invite").setExecutor(new InviteCommand(this));
@@ -521,8 +526,24 @@ public class BetterWhitelist extends JavaPlugin {
         }
     }
 
+    /**
+     * Get player Floodgate UUID from player name, try using floodgate api first, fallback to web api
+     * @param playerName
+     * @return Floodgate UUID
+     */
     private UUID getFUID(String playerName) {
+        UUID uuid;
         try {
+            getLogger().warning(messages.get("invite.loading_floodgate", "api", "Floodgate"));
+            uuid = floodgateApi.getUuidFor(playerName).join();
+            if (uuid != null) {
+                return uuid;
+            }
+        } catch (Exception e) {
+            getLogger().warning(messages.get("fuid.error", "api", "FloodGateAPI", "error", e));
+        }
+        try {
+            getLogger().warning(messages.get("invite.loading_floodgate", "api", fuidAPI));
             String encodedName = java.net.URLEncoder.encode(playerName, java.nio.charset.StandardCharsets.UTF_8);
             URL url = new URL(fuidAPI.replace("{gamertag}", encodedName));
             HttpURLConnection connection = (HttpURLConnection) url.openConnection();

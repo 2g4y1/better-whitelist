@@ -45,7 +45,7 @@ public class InviteCommand implements CommandExecutor {
         // Message for loading
         if (isBedrock) {
             sender.sendMessage(plugin.createMessage(
-                plugin.getMessages().get("invite.loading_floodgate", "api", plugin.getFuidApi()),
+                plugin.getMessages().get("invite.loading_floodgate", "api", "FloodgateAPI & "+plugin.getFuidApi()),
                 NamedTextColor.GRAY
             ));
         } else {

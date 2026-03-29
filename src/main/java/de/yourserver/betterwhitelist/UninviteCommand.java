@@ -42,7 +42,7 @@ public class UninviteCommand implements CommandExecutor {
         // Message for loading
         if (isBedrock) {
             sender.sendMessage(plugin.createMessage(
-                plugin.getMessages().get("uninvite.loading_floodgate", "api", plugin.getFuidApi()),
+                plugin.getMessages().get("uninvite.loading_floodgate", "api", "Floodgate API & " + plugin.getFuidApi()),
                 NamedTextColor.GRAY
             ));
         } else {
