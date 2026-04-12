@@ -132,7 +132,7 @@ jobs:
         
     - name: Create Release
       if: steps.exists.outputs.EXISTS == 'false'
-      uses: softprops/action-gh-release@v2
+      uses: softprops/action-gh-release@v3
       with:
         tag_name: ${{ steps.ver.outputs.VERSION }}
         name: Release ${{ steps.ver.outputs.VERSION }}
