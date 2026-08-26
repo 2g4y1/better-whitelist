@@ -6,147 +6,101 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'Release version'
+        description: 'Release version (e.g. v1.2.0)'
         required: true
       prerelease:
+        description: 'Mark as pre-release'
         type: boolean
         default: false
 
+permissions:
+  contents: read
+
 concurrency:
   group: release-${{ github.ref }}
-  cancel-in-progress: true
+  # Never cancel a run that may already be publishing a release
+  cancel-in-progress: false
 
 jobs:
-  ci-check:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-    
-    steps:
-    - uses: actions/checkout@v5
-      
-    - uses: actions/setup-java@v5
-      with:
-        java-version: '25'
-        distribution: 'temurin'
-        cache: maven
-    
-    - uses: actions/cache@v4
-      with:
-        path: ~/.m2/repository
-        key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
-        restore-keys: ${{ runner.os }}-maven-
-    
-    - name: Build and test
-      run: mvn clean verify --batch-mode
-
   release:
-    needs: ci-check
+    name: Build & Release
     runs-on: ubuntu-latest
     permissions:
       contents: write
-    
+
     steps:
-    - uses: actions/checkout@v5
-      with:
-        fetch-depth: 0
-      
-    - uses: actions/setup-java@v5
-      with:
-        java-version: '25'
-        distribution: 'temurin'
-        cache: maven
-    
-    - uses: actions/cache@v4
-      with:
-        path: ~/.m2/repository
-        key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
-        restore-keys: ${{ runner.os }}-maven-
-    
-    - name: Check release type
-      id: type
-      run: |
-        if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
-          echo "TYPE=manual" >> $GITHUB_OUTPUT
-          echo "PRERELEASE=${{ inputs.prerelease }}" >> $GITHUB_OUTPUT
-        elif [[ "${{ github.ref }}" == refs/tags/v* ]]; then
-          echo "TYPE=tag" >> $GITHUB_OUTPUT
-          echo "PRERELEASE=false" >> $GITHUB_OUTPUT
-        else
-          echo "TYPE=auto" >> $GITHUB_OUTPUT
-          echo "PRERELEASE=true" >> $GITHUB_OUTPUT
-        fi
-    
-    - name: Check for version tag
-      id: has_tag
-      run: |
-        if git describe --exact-match --tags HEAD 2>/dev/null | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$'; then
-          echo "FOUND=true" >> $GITHUB_OUTPUT
-        else
-          echo "FOUND=false" >> $GITHUB_OUTPUT
-        fi
-    
-    - name: Skip auto if version tag exists
-      if: steps.type.outputs.TYPE == 'auto' && steps.has_tag.outputs.FOUND == 'true'
-      run: exit 0
-        
-    - name: Build
-      run: mvn clean package --batch-mode
-      
-    - name: Get info
-      id: info
-      run: |
-        echo "COUNT=$(git rev-list --count HEAD)" >> $GITHUB_OUTPUT
-        echo "SHA=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
-      
-    - name: Determine version
-      id: ver
-      run: |
-        if [[ "${{ steps.type.outputs.TYPE }}" == "manual" ]]; then
-          echo "VERSION=${{ inputs.version }}" >> $GITHUB_OUTPUT
-        elif [[ "${{ steps.type.outputs.TYPE }}" == "tag" ]]; then
-          echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
-        else
-          echo "VERSION=v1.0.0-build.${{ steps.info.outputs.COUNT }}" >> $GITHUB_OUTPUT
-        fi
-    
-    - name: Check if tag exists
-      id: exists
-      run: |
-        if [[ "${{ steps.type.outputs.TYPE }}" == "tag" ]]; then
-          echo "EXISTS=false" >> $GITHUB_OUTPUT
-        elif git rev-parse "${{ steps.ver.outputs.VERSION }}" >/dev/null 2>&1; then
-          echo "EXISTS=true" >> $GITHUB_OUTPUT
-        else
-          echo "EXISTS=false" >> $GITHUB_OUTPUT
-        fi
-      
-    - name: Prepare release
-      if: steps.exists.outputs.EXISTS == 'false'
-      run: |
-        VERSION="${{ steps.ver.outputs.VERSION }}"
-        SHA="${{ steps.info.outputs.SHA }}"
-        mv target/better-whitelist-*.jar target/better-whitelist-${VERSION}-${SHA}.jar
-        cd target
-        sha256sum better-whitelist-*.jar > better-whitelist-${VERSION}-${SHA}.jar.sha256
-        
-    - name: Create Release
-      if: steps.exists.outputs.EXISTS == 'false'
-      uses: softprops/action-gh-release@v2
-      with:
-        tag_name: ${{ steps.ver.outputs.VERSION }}
-        name: Release ${{ steps.ver.outputs.VERSION }}
-        draft: false
-        prerelease: ${{ steps.type.outputs.PRERELEASE }}
-        generate_release_notes: true
-        body: |
-          ## 📦 Installation
-          JAR-Datei herunterladen und in den `plugins` Ordner kopieren.
-          
-          **Commit:** ${{ steps.info.outputs.SHA }}
-          **SHA256:** Siehe .sha256 Datei
-        files: |
-          target/better-whitelist-${{ steps.ver.outputs.VERSION }}-${{ steps.info.outputs.SHA }}.jar
-          target/better-whitelist-${{ steps.ver.outputs.VERSION }}-${{ steps.info.outputs.SHA }}.jar.sha256
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Checkout code
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Set up JDK 25
+        uses: actions/setup-java@v6
+        with:
+          java-version: '25'
+          distribution: temurin
+          cache: maven
+
+      # verify runs the tests as well - a release must not skip them
+      - name: Build and test
+        run: mvn --batch-mode --no-transfer-progress clean verify
+
+      - name: Determine version
+        id: ver
+        run: |
+          set -euo pipefail
+          POM_VERSION="$(mvn --batch-mode -q -DforceStdout help:evaluate -Dexpression=project.version)"
+
+          if [ "${{ github.event_name }}" = 'workflow_dispatch' ]; then
+            TAG="${{ inputs.version }}"
+            # Tolerate both "1.2.0" and "v1.2.0" as manual input
+            case "$TAG" in v*) ;; *) TAG="v$TAG" ;; esac
+            PRERELEASE='${{ inputs.prerelease }}'
+          else
+            TAG="${GITHUB_REF#refs/tags/}"
+            PRERELEASE='false'
+          fi
+
+          # The tag has to match the version in the pom, otherwise the release
+          # would ship a jar that is named differently from the tag.
+          if [ "$TAG" != "v${POM_VERSION}" ]; then
+            echo "::error::Tag '$TAG' passt nicht zur pom.xml-Version '$POM_VERSION' - bitte die Version in der pom.xml anpassen"
+            exit 1
+          fi
+
+          {
+            echo "TAG=$TAG"
+            echo "PRERELEASE=$PRERELEASE"
+            echo "SHA=$(git rev-parse --short HEAD)"
+            echo "ASSET=better-whitelist-${TAG}.jar"
+            echo "POM_VERSION=$POM_VERSION"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Prepare assets
+        run: |
+          set -euo pipefail
+          cd target
+          mv "better-whitelist-${{ steps.ver.outputs.POM_VERSION }}.jar" "${{ steps.ver.outputs.ASSET }}"
+          sha256sum "${{ steps.ver.outputs.ASSET }}" > "${{ steps.ver.outputs.ASSET }}.sha256"
+
+      - name: Create release
+        uses: softprops/action-gh-release@v3
+        with:
+          tag_name: ${{ steps.ver.outputs.TAG }}
+          name: Release ${{ steps.ver.outputs.TAG }}
+          draft: false
+          prerelease: ${{ steps.ver.outputs.PRERELEASE }}
+          generate_release_notes: true
+          fail_on_unmatched_files: true
+          body: |
+            ## 📦 Installation
+
+            Jar herunterladen und in den `plugins`-Ordner des Servers kopieren.
+
+            **Voraussetzungen:** Paper 26.2+ und Java 25+
+
+            **Commit:** ${{ steps.ver.outputs.SHA }}
+            **SHA256:** siehe `${{ steps.ver.outputs.ASSET }}.sha256`
+          files: |
+            target/${{ steps.ver.outputs.ASSET }}
+            target/${{ steps.ver.outputs.ASSET }}.sha256

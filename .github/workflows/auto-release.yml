@@ -2,119 +2,125 @@ name: Auto-Release
 
 on:
   workflow_run:
-    workflows: ["CI"]
+    workflows: [CI]
     types: [completed]
     branches: [main]
 
+permissions:
+  contents: read
+
 concurrency:
   group: auto-release-${{ github.ref }}
-  cancel-in-progress: true
+  # Never cancel a run that may already be publishing a release
+  cancel-in-progress: false
 
 jobs:
-  auto-release:
+  check:
+    name: Check
+    if: github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    outputs:
+      release: ${{ steps.guard.outputs.RELEASE }}
+
+    steps:
+      - name: Checkout the commit CI ran on
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+          fetch-depth: 0
+
+      - name: Skip when a release tag points at this commit
+        id: guard
+        run: |
+          set -euo pipefail
+          if git tag --points-at HEAD | grep -qE '^v[0-9]+\.[0-9]+\.[0-9]+$'; then
+            echo "Release-Tag vorhanden - Release.yml uebernimmt, kein Auto-Release"
+            echo "RELEASE=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "RELEASE=true" >> "$GITHUB_OUTPUT"
+          fi
+
+  release:
+    name: Pre-Release
+    needs: check
+    if: needs.check.outputs.release == 'true'
+    runs-on: ubuntu-latest
     permissions:
       contents: write
-    
+
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v5
+      - name: Checkout the commit CI ran on
+        uses: actions/checkout@v7
         with:
+          ref: ${{ github.event.workflow_run.head_sha }}
           fetch-depth: 0
-      
-      - name: Check if version tag exists
-        id: version_tag
-        run: |
-          # Prüfe ob ein v*.*.* Tag auf dem aktuellen Commit existiert
-          if git describe --exact-match --tags HEAD 2>/dev/null | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$'; then
-            echo "HAS_VERSION_TAG=true" >> $GITHUB_OUTPUT
-          else
-            echo "HAS_VERSION_TAG=false" >> $GITHUB_OUTPUT
-          fi
-      
-      - name: Skip if version tag exists
-        if: steps.version_tag.outputs.HAS_VERSION_TAG == 'true'
-        run: |
-          echo "⏭️ Version-Tag gefunden - überspringe Auto-Release"
-          exit 0
-      
+
       - name: Set up JDK 25
-        uses: actions/setup-java@v5
+        uses: actions/setup-java@v6
         with:
           java-version: '25'
-          distribution: 'temurin'
+          distribution: temurin
           cache: maven
-    
-      - name: Cache Maven packages
-        uses: actions/cache@v4
-        with:
-          path: ~/.m2/repository
-          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
-          restore-keys: |
-            ${{ runner.os }}-maven-
-        
-      - name: Build with Maven
-        run: mvn clean package --batch-mode
-      
-      - name: Get current date
-        id: date
-        run: echo "DATE=$(date +'%Y.%m.%d')" >> $GITHUB_OUTPUT
-      
-      - name: Get commit info
-        id: commit
+
+      - name: Build
+        run: mvn --batch-mode --no-transfer-progress clean package -DskipTests
+
+      - name: Collect release metadata
+        id: meta
         run: |
-          echo "COUNT=$(git rev-list --count HEAD)" >> $GITHUB_OUTPUT
-          echo "SHORT_SHA=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
-      
-      - name: Generate version tag
-        id: version
+          set -euo pipefail
+          VERSION="$(mvn --batch-mode -q -DforceStdout help:evaluate -Dexpression=project.version)"
+          SHA="$(git rev-parse --short HEAD)"
+          TAG="v${VERSION}-build.$(git rev-list --count HEAD)"
+
+          {
+            echo "VERSION=$VERSION"
+            echo "SHA=$SHA"
+            echo "TAG=$TAG"
+            echo "DATE=$(date +'%Y-%m-%d')"
+            echo "ASSET=better-whitelist-${TAG}-${SHA}.jar"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Stop if the build tag already exists
+        id: exists
         run: |
-          VERSION="v1.0.0-build.${{ steps.commit.outputs.COUNT }}"
-          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
-      
-      - name: Rename JAR with commit ID
-        run: |
-          mv target/better-whitelist-*.jar target/better-whitelist-${{ steps.version.outputs.VERSION }}-${{ steps.commit.outputs.SHORT_SHA }}.jar
-        
-      - name: Check if build tag exists
-        id: tag_exists
-        run: |
-          if git rev-parse "${{ steps.version.outputs.VERSION }}" >/dev/null 2>&1; then
-            echo "EXISTS=true" >> $GITHUB_OUTPUT
+          set -euo pipefail
+          if git rev-parse "${{ steps.meta.outputs.TAG }}" >/dev/null 2>&1; then
+            echo "EXISTS=true" >> "$GITHUB_OUTPUT"
           else
-            echo "EXISTS=false" >> $GITHUB_OUTPUT
+            echo "EXISTS=false" >> "$GITHUB_OUTPUT"
           fi
-        
-      - name: Generate SHA256
-        if: steps.tag_exists.outputs.EXISTS == 'false'
+
+      - name: Prepare assets
+        if: steps.exists.outputs.EXISTS == 'false'
         run: |
+          set -euo pipefail
           cd target
-          sha256sum better-whitelist-*.jar > better-whitelist-${{ steps.version.outputs.VERSION }}-${{ steps.commit.outputs.SHORT_SHA }}.jar.sha256
-          CHECKSUM=$(cat better-whitelist-*.jar.sha256 | cut -d' ' -f1)
-          echo "CHECKSUM=$CHECKSUM" >> $GITHUB_ENV
-      
-      - name: Create Release
-        if: steps.tag_exists.outputs.EXISTS == 'false'
-        uses: softprops/action-gh-release@v2
+          mv "better-whitelist-${{ steps.meta.outputs.VERSION }}.jar" "${{ steps.meta.outputs.ASSET }}"
+          sha256sum "${{ steps.meta.outputs.ASSET }}" > "${{ steps.meta.outputs.ASSET }}.sha256"
+
+      - name: Create pre-release
+        if: steps.exists.outputs.EXISTS == 'false'
+        uses: softprops/action-gh-release@v3
         with:
-          tag_name: ${{ steps.version.outputs.VERSION }}
-          name: Auto Release ${{ steps.version.outputs.VERSION }}
+          tag_name: ${{ steps.meta.outputs.TAG }}
+          target_commitish: ${{ github.event.workflow_run.head_sha }}
+          name: Auto Release ${{ steps.meta.outputs.TAG }}
           draft: false
           prerelease: true
+          make_latest: 'false'
           generate_release_notes: true
+          fail_on_unmatched_files: true
           body: |
             🤖 Automatisches Pre-Release
-            
-            **Build-Datum:** ${{ steps.date.outputs.DATE }}
-            **Commit:** ${{ github.event.head_commit.message }}
-            **Commit-ID:** ${{ steps.commit.outputs.SHORT_SHA }}
-            
-            **SHA256:** `${{ env.CHECKSUM }}`
-            
+
+            **Build-Datum:** ${{ steps.meta.outputs.DATE }}
+            **Commit:** ${{ github.event.workflow_run.head_commit.message }}
+            **Commit-ID:** ${{ steps.meta.outputs.SHA }}
+
+            Die SHA256-Pruefsumme liegt als `.sha256` neben dem Jar.
+
             Diese Version wurde automatisch nach erfolgreichem CI-Durchlauf erstellt.
           files: |
-            target/better-whitelist-${{ steps.version.outputs.VERSION }}-${{ steps.commit.outputs.SHORT_SHA }}.jar
-            target/better-whitelist-${{ steps.version.outputs.VERSION }}-${{ steps.commit.outputs.SHORT_SHA }}.jar.sha256
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+            target/${{ steps.meta.outputs.ASSET }}
+            target/${{ steps.meta.outputs.ASSET }}.sha256
