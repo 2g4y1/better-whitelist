@@ -1,7 +1,7 @@
 name: BetterWhitelist
 version: '${project.version}'
 main: de.yourserver.betterwhitelist.BetterWhitelist
-api-version: '1.21'
+api-version: '26.2'
 softdepend: [LuckPerms]
 author: YourName
 description: Konfigurierbares Whitelist-Plugin mit optionaler LuckPerms-Integration
